@@ -5,12 +5,18 @@
  */
 package celtech.automaker;
 
+import celtech.appManager.ApplicationMode;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.comms.RoboxCommsManager;
 import celtech.utils.AutoUpdate;
+import java.io.IOException;
+import java.net.URL;
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
@@ -52,6 +58,27 @@ public class AutoMaker extends Application
         String applicationName = DisplayManager.getLanguageBundle().getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
 
+        VBox statusSupplementaryPage = null;
+
+        try
+        {
+            URL mainPageURL = getClass().getResource("/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
+            FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(mainPageURL, DisplayManager.getLanguageBundle());
+            statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.load();
+        } catch (IOException ex)
+        {
+            steno.error("Failed to load supplementary status page:" + ex.getMessage());
+            System.err.println(ex);
+        }
+
+        VBox statusSlideOutHandle = displayManager.getSidePanelSlideOutHandle(ApplicationMode.STATUS);
+
+        if (statusSlideOutHandle != null)
+        {
+            statusSlideOutHandle.getChildren().add(statusSupplementaryPage);
+            VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
+        }
+        
         commsManager.start();
 
         stage.show();

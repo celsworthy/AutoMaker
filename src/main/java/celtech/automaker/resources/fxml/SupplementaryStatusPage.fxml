@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import celtech.coreUI.components.*?>
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox fx:id="configurationPage" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="380.0" styleClass="slideOutPanel" stylesheets="@../../../../../../../../CELTechCore/src/main/java/celtech/resources/css/JMetroDarkTheme.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="celtech.automaker.SupplementaryStatusPageController">
+<children>
+        <TabPane fx:id="configurationTabPane" maxWidth="450.0" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" VBox.vgrow="NEVER">
+            <tabs>
+                <Tab text="%gcodeMacroPanel.title">
+                    <content>
+                       <fx:include source="/celtech/resources/fxml/utilityPanels/GCodeMacroPanel.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="%smartreelProgrammer.title">
+                    <content>
+                       <fx:include source="/celtech/resources/fxml/utilityPanels/smartReelProgrammer.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="%diagnosticPanel.title">
+                    <content>
+                       <fx:include source="/celtech/resources/fxml/utilityPanels/DiagnosticPanel.fxml"/>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </children>
+</VBox>

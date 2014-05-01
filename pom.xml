@@ -58,6 +58,37 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+<!--            <plugin>
+                <groupId>com.pyx4me</groupId>
+                <artifactId>proguard-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>proguard</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <options>
+                        <option>-allowaccessmodification</option>
+                        <option>-keep public class * extends java.applet.Applet { *; }</option>
+                        <option>-verbose</option>
+                        <option>-injars target/AutoMaker-1.0-SNAPSHOT-jar-with-dependencies.jar</option>
+                    </options>
+                    <libs>
+                        <lib>${java.home}/lib/rt.jar</lib>
+                        <lib>${java.home}/lib/ext/jfxrt.jar</lib>
+                    </libs>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>ext</groupId>
+                        <artifactId>proguard</artifactId>
+                        <version>5.0beta1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>-->
             <plugin>
                 <groupId>com.github.goldin</groupId>
                 <artifactId>copy-maven-plugin</artifactId>

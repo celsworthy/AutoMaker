@@ -10,9 +10,11 @@ import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.comms.RoboxCommsManager;
 import celtech.utils.AutoUpdate;
+import celtech.utils.AutoUpdateCompletionListener;
 import java.io.IOException;
 import java.net.URL;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Priority;
@@ -27,7 +29,7 @@ import libertysystems.stenographer.StenographerFactory;
  *
  * @author Ian Hudson @ Liberty Systems Limited
  */
-public class AutoMaker extends Application
+public class AutoMaker extends Application implements AutoUpdateCompletionListener
 {
 
     private static final Stenographer steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
@@ -79,12 +81,11 @@ public class AutoMaker extends Application
             VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
         }
         
-        commsManager.start();
 
         stage.show();
-
-        autoUpdater = new AutoUpdate("AutoMaker", stage, this.getClass());
-//        autoUpdater.start();
+        
+        autoUpdater = new AutoUpdate("AutoMaker", this);
+        autoUpdater.start();
     }
 
     @Override
@@ -106,5 +107,18 @@ public class AutoMaker extends Application
     public static void main(String[] args)
     {
         launch(args);
+    }
+
+    @Override
+    public void autoUpdateComplete(boolean requiresShutdown)
+    {
+        if (requiresShutdown)
+        {
+            Platform.exit();
+        }
+        else
+        {
+            commsManager.start();
+        }
     }
 }

@@ -26,5 +26,19 @@
                 
                 <jpda.listen>true</jpda.listen>
             </properties>
+        </action>
+        <action>
+            <actionName>profile</actionName>
+            <packagings>
+                <packaging>jar</packaging>
+            </packagings>
+            <goals>
+                <goal>process-classes</goal>
+                <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
+            </goals>
+            <properties>
+                <exec.args>-Djava.library.path=D:\Development\RoboxResources\PrintSoftware\installer -DlibertySystems.configFile=C:\Users\Ian\Documents\NetBeansProjects\AutoMaker\AutoMaker.configFile.xml -classpath %classpath celtech.automaker.AutoMaker</exec.args>
+                <exec.executable>java</exec.executable>
+            </properties>
         </action>        
     </actions>

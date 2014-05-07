@@ -10,7 +10,6 @@ import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.Printer;
-import celtech.printerControl.PrinterStatusEnumeration;
 import celtech.printerControl.comms.RoboxCommsManager;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
@@ -19,7 +18,6 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Priority;
@@ -57,7 +55,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                 new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutomakerIcon_64x64.png")),
                                 new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutomakerIcon_32x32.png")));
 
-        commsManager = RoboxCommsManager.getInstance(ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class));
+        String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+        commsManager = RoboxCommsManager.getInstance(ApplicationConfiguration.getBinariesDirectory());
 
         try
         {

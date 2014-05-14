@@ -124,7 +124,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         stage.setOnShown((WindowEvent event) ->
         {
-            autoUpdater = new AutoUpdate("AutoMaker", completeListener);
+            autoUpdater = new AutoUpdate("AutoMaker", "0abc523fc24", completeListener);
             autoUpdater.start();
         });
 

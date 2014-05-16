@@ -113,6 +113,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                     if (shutDownResponse == dontShutDown)
                     {
+                        printer.getPrintQueue().abortPrint();
                         event.consume();
                     }
                     break;

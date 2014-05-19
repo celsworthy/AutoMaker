@@ -89,7 +89,7 @@
                     </dependency>
                 </dependencies>
             </plugin>-->
-            <plugin>
+<!--            <plugin>
                 <groupId>com.github.goldin</groupId>
                 <artifactId>copy-maven-plugin</artifactId>
                 <version>0.2.5</version>
@@ -116,7 +116,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
         </plugins>
     </build>
     <dependencies>

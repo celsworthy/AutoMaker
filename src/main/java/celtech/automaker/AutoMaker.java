@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.application.Application;
+import static javafx.application.Application.launch;
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -41,9 +42,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 {
 
     private static final Stenographer steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
-    private static Configuration configuration = null;
     private static DisplayManager displayManager = null;
     private ResourceBundle i18nBundle = null;
+    private static Configuration configuration = null;
     private RoboxCommsManager commsManager = null;
     private AutoUpdate autoUpdater = null;
     private Dialogs.CommandLink dontShutDown = null;
@@ -82,27 +83,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         shutDownAndTerminate = new Dialogs.CommandLink(i18nBundle.getString("dialogs.shutDownAndTerminateTitle"), i18nBundle.getString("dialogs.shutDownAndTerminateMessage"));
         shutDownWithoutTerminating = new Dialogs.CommandLink(i18nBundle.getString("dialogs.shutDownAndDontTerminateTitle"), i18nBundle.getString("dialogs.shutDownAndDontTerminateMessage"));
 
-        VBox statusSupplementaryPage = null;
-
-        try
-        {
-            URL mainPageURL = getClass().getResource("/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
-            FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(mainPageURL, i18nBundle);
-            statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.load();
-        } catch (IOException ex)
-        {
-            steno.error("Failed to load supplementary status page:" + ex.getMessage());
-            System.err.println(ex);
-        }
-
-        VBox statusSlideOutHandle = displayManager.getSidePanelSlideOutHandle(ApplicationMode.STATUS);
-
-        if (statusSlideOutHandle != null)
-        {
-            statusSlideOutHandle.getChildren().add(statusSupplementaryPage);
-            VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
-        }
-
         stage.setOnCloseRequest((WindowEvent event) ->
         {
             boolean transferringDataToPrinter = false;
@@ -131,11 +111,60 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         stage.setOnShown((WindowEvent event) ->
         {
-            autoUpdater = new AutoUpdate("AutoMaker", "0abc523fc24", completeListener);
+            autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(), ApplicationConfiguration.getDownloadModifier(ApplicationConfiguration.getApplicationName()), completeListener);
             autoUpdater.start();
         });
 
+        displayManager = DisplayManager.getInstance();
+        i18nBundle = DisplayManager.getLanguageBundle();
+
+        VBox statusSupplementaryPage = null;
+
+        try
+        {
+            URL mainPageURL = getClass().getResource("/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
+            FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(mainPageURL, i18nBundle);
+            statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.load();
+        } catch (IOException ex)
+        {
+            steno.error("Failed to load supplementary status page:" + ex.getMessage());
+            System.err.println(ex);
+        }
+
+        VBox statusSlideOutHandle = displayManager.getSidePanelSlideOutHandle(ApplicationMode.STATUS);
+
+        if (statusSlideOutHandle != null)
+        {
+            statusSlideOutHandle.getChildren().add(statusSupplementaryPage);
+            VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
+        }
+
         stage.show();
+    }
+
+    @Override
+    public void autoUpdateComplete(boolean requiresShutdown)
+    {
+        if (requiresShutdown)
+        {
+            Platform.exit();
+        } else
+        {
+            commsManager.start();
+        }
+    }
+
+    /**
+     * The main() method is ignored in correctly deployed JavaFX application.
+     * main() serves only as fallback in case the application can not be
+     * launched through deployment artifacts, e.g., in IDEs with limited FX
+     * support. NetBeans ignores main().
+     *
+     * @param args the command line arguments
+     */
+    public static void main(String[] args)
+    {
+        launch(args);
     }
 
     /**
@@ -183,6 +212,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         autoUpdater.shutdown();
         displayManager.shutdown();
         commsManager.shutdown();
+        ApplicationConfiguration.writeApplicationMemory();
 
         TaskController taskController = TaskController.getInstance();
 
@@ -191,30 +221,5 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Thread.sleep(5000);
             taskController.shutdownAllManagedTasks();
         }
-    }
-
-    /**
-     * The main() method is ignored in correctly deployed JavaFX application.
-     * main() serves only as fallback in case the application can not be
-     * launched through deployment artifacts, e.g., in IDEs with limited FX
-     * support. NetBeans ignores main().
-     *
-     * @param args the command line arguments
-     */
-    public static void main(String[] args)
-    {
-        launch(args);
-    }
-
-    @Override
-    public void autoUpdateComplete(boolean requiresShutdown)
-    {
-        if (requiresShutdown)
-        {
-            Platform.exit();
-        } else
-        {
-            commsManager.start();
-        }
-    }
+    }    
 }

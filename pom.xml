@@ -4,21 +4,29 @@
 
     <groupId>celtech</groupId>
     <artifactId>AutoMaker</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>0.10.11-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>AutoMaker</name>
     
-    <parent>
-        <groupId>celtech</groupId>
-        <artifactId>RoboxGUI</artifactId>
-        <version>1.1-SNAPSHOT</version>
-    </parent>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mainClass>celtech.automaker.AutoMaker</mainClass>
     </properties>
+    
+    <distributionManagement>
+        <repository>
+            <id>celtechRepo</id>
+            <name>CELTech releases</name>
+            <url>http://54.229.31.30:8080/artifactory/libs-release-local</url>
+        </repository>        
+        <snapshotRepository>
+            <id>celtechRepo</id>
+            <name>CELTech snapshots</name>
+            <url>http://54.229.31.30:8080/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 
     <organization>
         <!-- Used as the 'Vendor' for JNLP generation -->
@@ -33,6 +41,15 @@
             </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
@@ -61,8 +78,15 @@
         <dependency>
             <groupId>celtech</groupId>
             <artifactId>CELTechCore</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>0.10.11-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
     </dependencies>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
 </project>

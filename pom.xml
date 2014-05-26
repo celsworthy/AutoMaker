@@ -4,10 +4,16 @@
 
     <groupId>celtech</groupId>
     <artifactId>AutoMaker</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>AutoMaker</name>
+    
+    <parent>
+        <groupId>celtech</groupId>
+        <artifactId>RoboxGUI</artifactId>
+        <version>1.1-SNAPSHOT</version>
+    </parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -49,135 +55,14 @@
                     </execution>
                 </executions>
             </plugin>            
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-            <!--            <plugin>
-                <groupId>com.pyx4me</groupId>
-                <artifactId>proguard-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>proguard</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <options>
-                        <option>-allowaccessmodification</option>
-                        <option>-keep public class * extends java.applet.Applet { *; }</option>
-                        <option>-verbose</option>
-                        <option>-injars target/AutoMaker-1.0-SNAPSHOT-jar-with-dependencies.jar</option>
-                    </options>
-                    <libs>
-                        <lib>${java.home}/lib/rt.jar</lib>
-                        <lib>${java.home}/lib/ext/jfxrt.jar</lib>
-                    </libs>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>ext</groupId>
-                        <artifactId>proguard</artifactId>
-                        <version>5.0beta1</version>
-                    </dependency>
-                </dependencies>
-            </plugin>-->
-            <!--            <plugin>
-                <groupId>com.github.goldin</groupId>
-                <artifactId>copy-maven-plugin</artifactId>
-                <version>0.2.5</version>
-                <executions>
-                    <execution>
-                        <id>deploy-to-local-directory</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <skipIdentical>false</skipIdentical>
-                            <failIfNotFound>false</failIfNotFound>
-                            <resources>
-                                <resource>
-                                    <description>Copy artifact to another directory</description>
-                                    <targetPath>D:\Development\LatestBuilds</targetPath>
-                                    <directory>${project.build.directory}</directory>
-                                    <includes>
-                                        <include>*.jar</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>-->
-            <plugin>
-                <groupId>external.atlassian.jgitflow</groupId>
-                <artifactId>jgitflow-maven-plugin</artifactId>
-                <version>1.0-m1</version>                
-                <configuration>
-                    <!-- Enable this to push to origin using SSH keys -->
-                    <enableSshAgent>true</enableSshAgent>
-                    <!-- Keep your maven submodules at the same version as the parent POM -->
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <!--
-                      Pusing in-development features to origin allows all devs to see what each other
-                      are working on
-                    -->
-                    <pushFeatures>true</pushFeatures>
-                    <!--
-                      This allows the CI server (e.g. Jenkins) to automatically push new releases to
-                      origin; you can then either manually deploy them or, if you are doing Continuous
-                      Deployments, auto-deploy them to prod
-                    -->
-                    <pushReleases>true</pushReleases>
-                    <!--
-                      Hot Fixes should be pushed to origin as well so that any dev can pick them up
-                    -->
-                    <pushHotfixes>true</pushHotfixes>
-                    <!--
-                      Prevents deployments from dev workstations so that they can be done by a CI
-                      server
-                    -->
-                    <noDeploy>true</noDeploy>
-                    <flowInitContext>
-                        <!--
-                          You can customize your development branch name. Why? Because it's faster to type
-                          'git push origin dvlp'
-                          than
-                          'git push origin develop'
-                          ;-)
-                        -->
-                        <developBranchName>develop</developBranchName>
-                        <!-- You can also customize your tag prefixes -->
-                        <versionTagPrefix />
-                    </flowInitContext>
-                    <allowUntracked>true</allowUntracked>
-                </configuration>
-            </plugin>
-
         </plugins>
     </build>
     <dependencies>
         <dependency>
             <groupId>celtech</groupId>
             <artifactId>CELTechCore</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
     </dependencies>
-    <distributionManagement>
-        <repository>
-            <snapshots />
-            <id>snapshots</id>
-            <name>libs-snapshot-local</name>
-            <url>http://54.229.31.30:8080/artifactory/libs-snapshot-local</url>
-        </repository>
-    </distributionManagement>
 </project>

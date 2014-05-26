@@ -4,7 +4,7 @@
 
     <groupId>celtech</groupId>
     <artifactId>AutoMaker</artifactId>
-    <version>0.10.11-SNAPSHOT</version>
+    <version>0.10.12-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>AutoMaker</name>
@@ -80,7 +80,7 @@
         <dependency>
             <groupId>celtech</groupId>
             <artifactId>CELTechCore</artifactId>
-            <version>0.10.11-SNAPSHOT</version>
+            <version>0.10.12-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
     </dependencies>

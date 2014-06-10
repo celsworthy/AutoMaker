@@ -8,18 +8,18 @@ package celtech.automaker;
 import celtech.appManager.ApplicationMode;
 import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
-import celtech.configuration.MachineType;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.Printer;
 import celtech.printerControl.comms.RoboxCommsManager;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
+import static celtech.utils.SystemValidation.check3DSupported;
+import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
-import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
@@ -73,8 +73,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         displayManager = DisplayManager.getInstance();
         i18nBundle = DisplayManager.getLanguageBundle();
 
-        checkMachineTypeRecognised();
-        check3DSupported();
+        checkMachineTypeRecognised(i18nBundle);
+        check3DSupported(i18nBundle);
 
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
@@ -165,45 +165,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     public static void main(String[] args)
     {
         launch(args);
-    }
-
-    /**
-     * Check that the machine type is fully recognised and if not then exit the
-     * application.
-     */
-    private void checkMachineTypeRecognised()
-    {
-        MachineType machineType = ApplicationConfiguration.getMachineType();
-        if (machineType.equals(MachineType.UNKNOWN))
-        {
-            Dialogs.create()
-                    .owner(null)
-                    .title(i18nBundle.getString("dialogs.fatalErrorDetectingMachineType"))
-                    .masthead(null)
-                    .message(i18nBundle.getString("dialogs.automakerUnknownMachineType"))
-                    .showError();
-            steno.error("Closing down due to unrecognised machine type.");
-            Platform.exit();
-        }
-    }
-
-    /**
-     * Check that 3D is supported on this machine and if not then exit the
-     * application.
-     */
-    private void check3DSupported()
-    {
-        if (!Platform.isSupported(ConditionalFeature.SCENE3D))
-        {
-            Dialogs.create()
-                    .owner(null)
-                    .title(i18nBundle.getString("dialogs.fatalErrorNo3DSupport"))
-                    .masthead(null)
-                    .message(i18nBundle.getString("dialogs.automakerErrorNo3DSupport"))
-                    .showError();
-            steno.error("Closing down due to lack of required 3D support.");
-            Platform.exit();
-        }
     }
 
     @Override

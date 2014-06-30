@@ -5,6 +5,7 @@
  */
 package celtech.automaker;
 
+import celtech.Lookup;
 import celtech.appManager.ApplicationMode;
 import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
@@ -59,7 +60,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                 new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutomakerIcon_32x32.png")));
 
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
-
+        Lookup.initialise();
         commsManager = RoboxCommsManager.getInstance(ApplicationConfiguration.getBinariesDirectory());
 
         try

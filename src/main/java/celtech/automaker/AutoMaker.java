@@ -75,7 +75,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         i18nBundle = DisplayManager.getLanguageBundle();
 
         checkMachineTypeRecognised(i18nBundle);
-        check3DSupported(i18nBundle);
 
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
@@ -151,6 +150,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Platform.exit();
         } else
         {
+            check3DSupported(i18nBundle);    
             commsManager.start();
         }
     }

@@ -15,6 +15,6 @@
        <logfilename>#ApplicationConfiguration:ApplicationDataStorageDirectory#/AutoMaker.log</logfilename>
        <logmode>LOCAL</logmode>
        <logtee>T</logtee>
-       <loglevel>TRACE</loglevel>
+       <loglevel>INFO</loglevel>
     </Stenographer>
 </root>

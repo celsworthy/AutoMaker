@@ -5,6 +5,7 @@
  */
 package celtech.automaker;
 
+import celtech.Lookup;
 import celtech.appManager.ApplicationMode;
 import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
@@ -59,7 +60,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                 new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutomakerIcon_32x32.png")));
 
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
-
+        Lookup.initialise();
         commsManager = RoboxCommsManager.getInstance(ApplicationConfiguration.getBinariesDirectory());
 
         try
@@ -74,7 +75,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         i18nBundle = DisplayManager.getLanguageBundle();
 
         checkMachineTypeRecognised(i18nBundle);
-        check3DSupported(i18nBundle);
 
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
@@ -150,6 +150,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Platform.exit();
         } else
         {
+            check3DSupported(i18nBundle);    
             commsManager.start();
         }
     }

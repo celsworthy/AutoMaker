@@ -10,9 +10,9 @@
     <children>
         <TabPane fx:id="configurationTabPane" maxWidth="450.0" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" VBox.vgrow="NEVER">
             <tabs>
-                <Tab text="%smartreelProgrammer.title">
+                <Tab text="%smartpartProgrammer.title">
                     <content>
-                        <fx:include source="/celtech/resources/fxml/utilityPanels/smartReelProgrammer.fxml"/>
+                        <fx:include source="/celtech/resources/fxml/utilityPanels/smartPartProgrammer.fxml"/>
                     </content>
                 </Tab>
                 <Tab text="%maintenancePanel.title">

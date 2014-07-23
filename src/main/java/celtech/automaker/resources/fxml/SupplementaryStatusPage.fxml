@@ -20,11 +20,6 @@
                         <fx:include source="/celtech/resources/fxml/utilityPanels/ReelDataPanel.fxml"/>
                     </content>
                 </Tab>                
-                <Tab text="%smartpartProgrammer.title">
-                    <content>
-                        <fx:include source="/celtech/resources/fxml/utilityPanels/smartPartProgrammer.fxml"/>
-                    </content>
-                </Tab>
                 <Tab text="%maintenancePanel.title">
                     <content>
                         <fx:include source="/celtech/resources/fxml/utilityPanels/MaintenancePanel.fxml"/>

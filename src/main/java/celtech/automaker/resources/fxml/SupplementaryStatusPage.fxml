@@ -10,11 +10,16 @@
     <children>
         <TabPane fx:id="configurationTabPane" maxWidth="450.0" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" VBox.vgrow="NEVER">
             <tabs>
-                <Tab text="%smartpartProgrammer.title">
+                <Tab text="Head">
                     <content>
-                        <fx:include source="/celtech/resources/fxml/utilityPanels/smartPartProgrammer.fxml"/>
+                        <fx:include source="/celtech/resources/fxml/utilityPanels/headEEPROM.fxml"/>
                     </content>
                 </Tab>
+                <Tab text="Reel">
+                    <content>
+                        <fx:include source="/celtech/resources/fxml/utilityPanels/ReelDataPanel.fxml"/>
+                    </content>
+                </Tab>                
                 <Tab text="%maintenancePanel.title">
                     <content>
                         <fx:include source="/celtech/resources/fxml/utilityPanels/MaintenancePanel.fxml"/>

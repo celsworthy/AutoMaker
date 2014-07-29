@@ -135,7 +135,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         if (statusSlideOutHandle != null)
         {
-            statusSlideOutHandle.getChildren().add(statusSupplementaryPage);
+            statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
             VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
         }
 

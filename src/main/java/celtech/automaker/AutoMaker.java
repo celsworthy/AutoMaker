@@ -55,9 +55,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void start(Stage stage) throws Exception
     {
-        stage.getIcons().addAll(new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutomakerIcon_256x256.png")),
-                                new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutomakerIcon_64x64.png")),
-                                new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutomakerIcon_32x32.png")));
+        stage.getIcons().addAll(new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
+                                new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
+                                new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
 
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         Lookup.initialise();

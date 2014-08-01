@@ -62,7 +62,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void start(Stage stage) throws Exception
     {
-        setAppUserIDForWindows();
+//        setAppUserIDForWindows();
 
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
             "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),

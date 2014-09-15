@@ -9,6 +9,8 @@ import celtech.Lookup;
 import celtech.appManager.ApplicationMode;
 import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
+import static celtech.configuration.ApplicationConfiguration.getMachineType;
+import celtech.configuration.MachineType;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.Printer;
 import celtech.printerControl.comms.RoboxCommsManager;
@@ -16,8 +18,14 @@ import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
+import com.sun.jna.WString;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -42,7 +50,8 @@ import org.controlsfx.dialog.Dialogs;
 public class AutoMaker extends Application implements AutoUpdateCompletionListener
 {
 
-    private static final Stenographer steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
+    private static final Stenographer steno = StenographerFactory.getStenographer(
+        AutoMaker.class.getName());
     private static DisplayManager displayManager = null;
     private ResourceBundle i18nBundle = null;
     private static Configuration configuration = null;
@@ -55,9 +64,30 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void start(Stage stage) throws Exception
     {
-        stage.getIcons().addAll(new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
-                                new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
-                                new Image(getClass().getResourceAsStream("/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
+        final Parameters params = getParameters();
+        final List<String> parameters = params.getRaw();
+
+        final String startupModel = !parameters.isEmpty() ? parameters.get(0) : "";
+        final ArrayList<File> startupModelsToLoad = new ArrayList<>();
+
+        if (parameters.isEmpty() == false)
+        {
+            File modelFile = new File(parameters.get(0));
+
+            if (modelFile != null)
+            {
+                startupModelsToLoad.add(modelFile);
+            }
+        }
+
+        setAppUserIDForWindows();
+
+        stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
+            "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
+                                new Image(getClass().getResourceAsStream(
+                                        "/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
+                                new Image(getClass().getResourceAsStream(
+                                        "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
 
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         Lookup.initialise();
@@ -79,9 +109,14 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
 
-        dontShutDown = new Dialogs.CommandLink(i18nBundle.getString("dialogs.dontShutDownTitle"), i18nBundle.getString("dialogs.dontShutDownMessage"));
-        shutDownAndTerminate = new Dialogs.CommandLink(i18nBundle.getString("dialogs.shutDownAndTerminateTitle"), i18nBundle.getString("dialogs.shutDownAndTerminateMessage"));
-        shutDownWithoutTerminating = new Dialogs.CommandLink(i18nBundle.getString("dialogs.shutDownAndDontTerminateTitle"), i18nBundle.getString("dialogs.shutDownAndDontTerminateMessage"));
+        dontShutDown = new Dialogs.CommandLink(i18nBundle.getString("dialogs.dontShutDownTitle"),
+                                               i18nBundle.getString("dialogs.dontShutDownMessage"));
+        shutDownAndTerminate = new Dialogs.CommandLink(i18nBundle.getString(
+            "dialogs.shutDownAndTerminateTitle"), i18nBundle.getString(
+                                                           "dialogs.shutDownAndTerminateMessage"));
+        shutDownWithoutTerminating = new Dialogs.CommandLink(i18nBundle.getString(
+            "dialogs.shutDownAndDontTerminateTitle"), i18nBundle.getString(
+                                                                 "dialogs.shutDownAndDontTerminateMessage"));
 
         stage.setOnCloseRequest((WindowEvent event) ->
         {
@@ -92,10 +127,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 transferringDataToPrinter = printer.getPrintQueue().sendingDataToPrinterProperty().get();
                 if (transferringDataToPrinter)
                 {
-                    Action shutDownResponse = Dialogs.create().title(i18nBundle.getString("dialogs.printJobsAreStillTransferringTitle"))
-                            .message(i18nBundle.getString("dialogs.printJobsAreStillTransferringMessage"))
-                            .masthead(null)
-                            .showCommandLinks(dontShutDown, dontShutDown, shutDownAndTerminate);
+                    Action shutDownResponse = Dialogs.create().title(i18nBundle.getString(
+                        "dialogs.printJobsAreStillTransferringTitle"))
+                        .message(
+                            i18nBundle.getString("dialogs.printJobsAreStillTransferringMessage"))
+                        .masthead(null)
+                        .showCommandLinks(dontShutDown, dontShutDown, shutDownAndTerminate);
 
                     if (shutDownResponse == dontShutDown)
                     {
@@ -111,8 +148,13 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         stage.setOnShown((WindowEvent event) ->
         {
-            autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(), ApplicationConfiguration.getDownloadModifier(ApplicationConfiguration.getApplicationName()), completeListener);
+            autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(),
+                                         ApplicationConfiguration.getDownloadModifier(
+                                             ApplicationConfiguration.getApplicationName()),
+                                         completeListener);
             autoUpdater.start();
+
+            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
 
         displayManager = DisplayManager.getInstance();
@@ -122,8 +164,10 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         try
         {
-            URL mainPageURL = getClass().getResource("/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
-            FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(mainPageURL, i18nBundle);
+            URL mainPageURL = getClass().getResource(
+                "/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
+            FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(mainPageURL,
+                                                                                   i18nBundle);
             statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.load();
         } catch (IOException ex)
         {
@@ -143,23 +187,22 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     @Override
-    public void autoUpdateComplete(boolean requiresShutdown)
+    public void autoUpdateComplete(boolean requiresShutdown
+    )
     {
         if (requiresShutdown)
         {
             Platform.exit();
         } else
         {
-            check3DSupported(i18nBundle);    
+            check3DSupported(i18nBundle);
             commsManager.start();
         }
     }
 
     /**
-     * The main() method is ignored in correctly deployed JavaFX application.
-     * main() serves only as fallback in case the application can not be
-     * launched through deployment artifacts, e.g., in IDEs with limited FX
-     * support. NetBeans ignores main().
+     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as fallback in case the application can not be launched through deployment artifacts, e.g., in IDEs
+     * with limited FX support. NetBeans ignores main().
      *
      * @param args the command line arguments
      */
@@ -183,5 +226,32 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Thread.sleep(5000);
             taskController.shutdownAllManagedTasks();
         }
-    }    
+    }
+
+    private void setAppUserIDForWindows()
+    {
+        if (getMachineType() == MachineType.WINDOWS)
+        {
+            setCurrentProcessExplicitAppUserModelID("CelTech.AutoMaker");
+        }
+    }
+
+    public static void setCurrentProcessExplicitAppUserModelID(final String appID)
+    {
+        if (SetCurrentProcessExplicitAppUserModelID(new WString(appID)).longValue() != 0)
+        {
+            throw new RuntimeException(
+                "unable to set current process explicit AppUserModelID to: " + appID);
+        }
+    }
+
+    private static native NativeLong SetCurrentProcessExplicitAppUserModelID(WString appID);
+
+    static
+    {
+        if (getMachineType() == MachineType.WINDOWS)
+        {
+            Native.register("shell32");
+        }
+    }
 }

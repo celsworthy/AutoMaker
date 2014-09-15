@@ -18,8 +18,14 @@ import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
+import com.sun.jna.WString;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -36,10 +42,6 @@ import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.dialog.Dialogs;
-
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.WString;
 
 /**
  *
@@ -62,6 +64,22 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void start(Stage stage) throws Exception
     {
+        final Parameters params = getParameters();
+        final List<String> parameters = params.getRaw();
+
+        final String startupModel = !parameters.isEmpty() ? parameters.get(0) : "";
+        final ArrayList<File> startupModelsToLoad = new ArrayList<>();
+
+        if (parameters.isEmpty() == false)
+        {
+            File modelFile = new File(parameters.get(0));
+
+            if (modelFile != null)
+            {
+                startupModelsToLoad.add(modelFile);
+            }
+        }
+
         setAppUserIDForWindows();
 
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
@@ -135,6 +153,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                              ApplicationConfiguration.getApplicationName()),
                                          completeListener);
             autoUpdater.start();
+
+            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
 
         displayManager = DisplayManager.getInstance();
@@ -167,7 +187,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     @Override
-    public void autoUpdateComplete(boolean requiresShutdown)
+    public void autoUpdateComplete(boolean requiresShutdown
+    )
     {
         if (requiresShutdown)
         {
@@ -180,9 +201,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     /**
-     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as
-     * fallback in case the application can not be launched through deployment artifacts, e.g., in
-     * IDEs with limited FX support. NetBeans ignores main().
+     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as fallback in case the application can not be launched through deployment artifacts, e.g., in IDEs
+     * with limited FX support. NetBeans ignores main().
      *
      * @param args the command line arguments
      */

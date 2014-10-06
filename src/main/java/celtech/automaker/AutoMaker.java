@@ -12,7 +12,7 @@ import celtech.configuration.ApplicationConfiguration;
 import static celtech.configuration.ApplicationConfiguration.getMachineType;
 import celtech.configuration.MachineType;
 import celtech.coreUI.DisplayManager;
-import celtech.printerControl.Printer;
+import celtech.printerControl.model.Printer;
 import celtech.printerControl.comms.RoboxCommsManager;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;

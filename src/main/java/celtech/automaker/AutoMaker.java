@@ -9,8 +9,6 @@ import celtech.Lookup;
 import celtech.appManager.ApplicationMode;
 import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
-import static celtech.configuration.ApplicationConfiguration.getMachineType;
-import celtech.configuration.MachineType;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.Printer;
 import celtech.printerControl.comms.RoboxCommsManager;
@@ -18,9 +16,6 @@ import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.WString;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -80,7 +75,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             }
         }
 
-        setAppUserIDForWindows();
+//        setAppUserIDForWindows();
 
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
             "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
@@ -228,30 +223,30 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         }
     }
 
-    private void setAppUserIDForWindows()
-    {
-        if (getMachineType() == MachineType.WINDOWS)
-        {
-            setCurrentProcessExplicitAppUserModelID("CelTech.AutoMaker");
-        }
-    }
-
-    public static void setCurrentProcessExplicitAppUserModelID(final String appID)
-    {
-        if (SetCurrentProcessExplicitAppUserModelID(new WString(appID)).longValue() != 0)
-        {
-            throw new RuntimeException(
-                "unable to set current process explicit AppUserModelID to: " + appID);
-        }
-    }
-
-    private static native NativeLong SetCurrentProcessExplicitAppUserModelID(WString appID);
-
-    static
-    {
-        if (getMachineType() == MachineType.WINDOWS)
-        {
-            Native.register("shell32");
-        }
-    }
+//    private void setAppUserIDForWindows()
+//    {
+//        if (getMachineType() == MachineType.WINDOWS)
+//        {
+//            setCurrentProcessExplicitAppUserModelID("CelTech.AutoMaker");
+//        }
+//    }
+//
+//    public static void setCurrentProcessExplicitAppUserModelID(final String appID)
+//    {
+//        if (SetCurrentProcessExplicitAppUserModelID(new WString(appID)).longValue() != 0)
+//        {
+//            throw new RuntimeException(
+//                "unable to set current process explicit AppUserModelID to: " + appID);
+//        }
+//    }
+//
+//    private static native NativeLong SetCurrentProcessExplicitAppUserModelID(WString appID);
+//
+//    static
+//    {
+//        if (getMachineType() == MachineType.WINDOWS)
+//        {
+//            Native.register("shell32");
+//        }
+//    }
 }

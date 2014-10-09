@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package celtech.automaker;
 
 import celtech.Lookup;
@@ -12,8 +7,10 @@ import celtech.configuration.ApplicationConfiguration;
 import static celtech.configuration.ApplicationConfiguration.getMachineType;
 import celtech.configuration.MachineType;
 import celtech.coreUI.DisplayManager;
-import celtech.printerControl.Printer;
+import celtech.printerControl.PrinterStatus;
 import celtech.printerControl.comms.RoboxCommsManager;
+import celtech.printerControl.model.Printer;
+import celtech.printerControl.model.PrinterException;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
@@ -29,6 +26,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
+import static javafx.application.Application.launch;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
@@ -36,6 +34,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javax.print.attribute.standard.PrinterState;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
@@ -124,7 +123,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
             for (Printer printer : commsManager.getPrintStatusList())
             {
-                transferringDataToPrinter = printer.getPrintQueue().sendingDataToPrinterProperty().get();
+                transferringDataToPrinter = printer.printerStatusProperty().equals(PrinterStatus.SENDING_TO_PRINTER);
                 if (transferringDataToPrinter)
                 {
                     Action shutDownResponse = Dialogs.create().title(i18nBundle.getString(
@@ -136,7 +135,13 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                     if (shutDownResponse == dontShutDown)
                     {
-                        printer.getPrintQueue().abortPrint();
+                        try
+                        {
+                            printer.cancel(null);
+                        } catch (PrinterException ex)
+                        {
+                            steno.error("Error cancelling print - " + ex.getMessage());
+                        }
                         event.consume();
                     }
                     break;

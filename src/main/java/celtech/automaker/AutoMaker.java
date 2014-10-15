@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package celtech.automaker;
 
 import celtech.Lookup;
@@ -12,16 +7,25 @@ import celtech.configuration.ApplicationConfiguration;
 import static celtech.configuration.ApplicationConfiguration.getMachineType;
 import celtech.configuration.MachineType;
 import celtech.coreUI.DisplayManager;
-import celtech.printerControl.Printer;
+import celtech.printerControl.PrinterStatus;
 import celtech.printerControl.comms.RoboxCommsManager;
+import celtech.printerControl.model.Printer;
+import celtech.printerControl.model.PrinterException;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
+import com.sun.jna.WString;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Application;
+import static javafx.application.Application.launch;
 import static javafx.application.Application.launch;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -30,16 +34,13 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javax.print.attribute.standard.PrinterState;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.dialog.Dialogs;
-
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.WString;
 
 /**
  *
@@ -62,6 +63,23 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void start(Stage stage) throws Exception
     {
+        final Parameters params = getParameters();
+        final List<String> parameters = params.getRaw();
+
+        final String startupModel = !parameters.isEmpty() ? parameters.get(0) : "";
+        final ArrayList<File> startupModelsToLoad = new ArrayList<>();
+
+        if (parameters.isEmpty() == false)
+        {
+            File modelFile = new File(parameters.get(0));
+
+            if (modelFile != null)
+            {
+                startupModelsToLoad.add(modelFile);
+            }
+        }
+
+        setAppUserIDForWindows();
 //        setAppUserIDForWindows();
 
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
@@ -106,7 +124,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
             for (Printer printer : commsManager.getPrintStatusList())
             {
-                transferringDataToPrinter = printer.getPrintQueue().sendingDataToPrinterProperty().get();
+                transferringDataToPrinter = printer.printerStatusProperty().equals(PrinterStatus.SENDING_TO_PRINTER);
                 if (transferringDataToPrinter)
                 {
                     Action shutDownResponse = Dialogs.create().title(i18nBundle.getString(
@@ -118,7 +136,13 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                     if (shutDownResponse == dontShutDown)
                     {
-                        printer.getPrintQueue().abortPrint();
+                        try
+                        {
+                            printer.cancel(null);
+                        } catch (PrinterException ex)
+                        {
+                            steno.error("Error cancelling print - " + ex.getMessage());
+                        }
                         event.consume();
                     }
                     break;
@@ -135,6 +159,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                              ApplicationConfiguration.getApplicationName()),
                                          completeListener);
             autoUpdater.start();
+
+            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
 
         displayManager = DisplayManager.getInstance();
@@ -167,7 +193,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     @Override
-    public void autoUpdateComplete(boolean requiresShutdown)
+    public void autoUpdateComplete(boolean requiresShutdown
+    )
     {
         if (requiresShutdown)
         {
@@ -180,9 +207,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     /**
-     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as
-     * fallback in case the application can not be launched through deployment artifacts, e.g., in
-     * IDEs with limited FX support. NetBeans ignores main().
+     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as fallback in case the application can not be launched through deployment artifacts, e.g., in IDEs
+     * with limited FX support. NetBeans ignores main().
      *
      * @param args the command line arguments
      */

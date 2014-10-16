@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
@@ -34,7 +33,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import javax.print.attribute.standard.PrinterState;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
@@ -79,7 +77,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             }
         }
 
-        setAppUserIDForWindows();
+//        setAppUserIDForWindows();
 //        setAppUserIDForWindows();
 
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
@@ -122,7 +120,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             boolean transferringDataToPrinter = false;
 
-            for (Printer printer : commsManager.getPrintStatusList())
+            for (Printer printer : Lookup.getConnectedPrinters())
             {
                 transferringDataToPrinter = printer.printerStatusProperty().equals(PrinterStatus.SENDING_TO_PRINTER);
                 if (transferringDataToPrinter)

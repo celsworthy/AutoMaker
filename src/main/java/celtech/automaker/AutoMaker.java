@@ -54,9 +54,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private static Configuration configuration = null;
     private RoboxCommsManager commsManager = null;
     private AutoUpdate autoUpdater = null;
-    private Dialogs.CommandLink dontShutDown = null;
-    private Dialogs.CommandLink shutDownAndTerminate = null;
-    private Dialogs.CommandLink shutDownWithoutTerminating = null;
 
     @Override
     public void start(Stage stage) throws Exception
@@ -79,7 +76,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
 //        setAppUserIDForWindows();
 //        setAppUserIDForWindows();
-
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
             "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
                                 new Image(getClass().getResourceAsStream(
@@ -107,45 +103,35 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
 
-        dontShutDown = new Dialogs.CommandLink(i18nBundle.getString("dialogs.dontShutDownTitle"),
-                                               i18nBundle.getString("dialogs.dontShutDownMessage"));
-        shutDownAndTerminate = new Dialogs.CommandLink(i18nBundle.getString(
-            "dialogs.shutDownAndTerminateTitle"), i18nBundle.getString(
-                                                           "dialogs.shutDownAndTerminateMessage"));
-        shutDownWithoutTerminating = new Dialogs.CommandLink(i18nBundle.getString(
-            "dialogs.shutDownAndDontTerminateTitle"), i18nBundle.getString(
-                                                                 "dialogs.shutDownAndDontTerminateMessage"));
-
         stage.setOnCloseRequest((WindowEvent event) ->
         {
             boolean transferringDataToPrinter = false;
 
             for (Printer printer : Lookup.getConnectedPrinters())
             {
-                transferringDataToPrinter = printer.printerStatusProperty().equals(PrinterStatus.SENDING_TO_PRINTER);
-                if (transferringDataToPrinter)
-                {
-                    Action shutDownResponse = Dialogs.create().title(i18nBundle.getString(
-                        "dialogs.printJobsAreStillTransferringTitle"))
-                        .message(
-                            i18nBundle.getString("dialogs.printJobsAreStillTransferringMessage"))
-                        .masthead(null)
-                        .showCommandLinks(dontShutDown, dontShutDown, shutDownAndTerminate);
+                transferringDataToPrinter = transferringDataToPrinter | printer.printerStatusProperty().equals(PrinterStatus.SENDING_TO_PRINTER);
+            }
 
-                    if (shutDownResponse == dontShutDown)
+            if (transferringDataToPrinter)
+            {
+                boolean shutDownAnyway = Lookup.getSystemNotificationHandler().showJobsTransferringShutdownDialog();
+
+                if (shutDownAnyway)
+                {
+                    for (Printer printer : Lookup.getConnectedPrinters())
                     {
                         try
                         {
                             printer.cancel(null);
                         } catch (PrinterException ex)
                         {
-                            steno.error("Error cancelling print - " + ex.getMessage());
+                            steno.error("Error cancelling print on printer " + printer.getPrinterIdentity().printerFriendlyNameProperty().get() + " - " + ex.getMessage());
                         }
-                        event.consume();
                     }
-                    break;
+                    event.consume();
                 }
             }
+
         });
 
         final AutoUpdateCompletionListener completeListener = this;

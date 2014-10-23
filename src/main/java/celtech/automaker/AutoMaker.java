@@ -109,7 +109,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
             for (Printer printer : Lookup.getConnectedPrinters())
             {
-                transferringDataToPrinter = transferringDataToPrinter | printer.printerStatusProperty().equals(PrinterStatus.SENDING_TO_PRINTER);
+                transferringDataToPrinter = transferringDataToPrinter | printer.printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
             }
 
             if (transferringDataToPrinter)
@@ -128,10 +128,11 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                             steno.error("Error cancelling print on printer " + printer.getPrinterIdentity().printerFriendlyNameProperty().get() + " - " + ex.getMessage());
                         }
                     }
+                } else
+                {
                     event.consume();
                 }
             }
-
         });
 
         final AutoUpdateCompletionListener completeListener = this;

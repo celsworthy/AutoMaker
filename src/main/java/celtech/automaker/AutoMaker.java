@@ -59,21 +59,21 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void start(Stage stage) throws Exception
     {
-        final Parameters params = getParameters();
-        final List<String> parameters = params.getRaw();
-
-        final String startupModel = !parameters.isEmpty() ? parameters.get(0) : "";
-        final ArrayList<File> startupModelsToLoad = new ArrayList<>();
-
-        if (parameters.isEmpty() == false)
-        {
-            File modelFile = new File(parameters.get(0));
-
-            if (modelFile != null)
-            {
-                startupModelsToLoad.add(modelFile);
-            }
-        }
+//        final Parameters params = getParameters();
+//        final List<String> parameters = params.getRaw();
+//
+//        final String startupModel = !parameters.isEmpty() ? parameters.get(0) : "";
+//        final ArrayList<File> startupModelsToLoad = new ArrayList<>();
+//
+//        if (parameters.isEmpty() == false)
+//        {
+//            File modelFile = new File(parameters.get(0));
+//
+//            if (modelFile != null)
+//            {
+//                startupModelsToLoad.add(modelFile);
+//            }
+//        }
 
 //        setAppUserIDForWindows();
 
@@ -149,7 +149,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                          completeListener);
             autoUpdater.start();
 
-            displayManager.loadExternalModels(startupModelsToLoad, true, false);
+//            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
 
         displayManager = DisplayManager.getInstance();

@@ -37,8 +37,6 @@ import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
-import org.controlsfx.control.action.Action;
-import org.controlsfx.dialog.Dialogs;
 
 /**
  *
@@ -61,18 +59,22 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         final Parameters params = getParameters();
         final List<String> parameters = params.getRaw();
 
-        final String startupModel = !parameters.isEmpty() ? parameters.get(0) : "";
-        final ArrayList<File> startupModelsToLoad = new ArrayList<>();
-
-        if (parameters.isEmpty() == false)
-        {
-            File modelFile = new File(parameters.get(0));
-
-            if (modelFile != null)
-            {
-                startupModelsToLoad.add(modelFile);
-            }
-        }
+//        final String startupModel = !parameters.isEmpty() ? parameters.get(0) : "";
+//        final ArrayList<File> startupModelsToLoad = new ArrayList<>();
+//
+//        if (parameters.isEmpty() == false)
+//        {
+//            String 
+//            File modelFile = new File(parameters.get(0));
+//            
+//            if (modelFile.exists()
+//                && mode)
+//
+//            if (modelFile != null)
+//            {
+//                startupModelsToLoad.add(modelFile);
+//            }
+//        }
 
 //        setAppUserIDForWindows();
 //        setAppUserIDForWindows();
@@ -145,7 +147,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                          completeListener);
             autoUpdater.start();
 
-            displayManager.loadExternalModels(startupModelsToLoad, true, false);
+//            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
 
         displayManager = DisplayManager.getInstance();

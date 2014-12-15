@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package celtech.automaker;
 
 import celtech.Lookup;
@@ -10,8 +5,10 @@ import celtech.appManager.ApplicationMode;
 import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
-import celtech.printerControl.Printer;
+import celtech.printerControl.PrinterStatus;
 import celtech.printerControl.comms.RoboxCommsManager;
+import celtech.printerControl.model.Printer;
+import celtech.printerControl.model.PrinterException;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
@@ -35,8 +32,6 @@ import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
-import org.controlsfx.control.action.Action;
-import org.controlsfx.dialog.Dialogs;
 
 /**
  *
@@ -52,9 +47,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private static Configuration configuration = null;
     private RoboxCommsManager commsManager = null;
     private AutoUpdate autoUpdater = null;
-    private Dialogs.CommandLink dontShutDown = null;
-    private Dialogs.CommandLink shutDownAndTerminate = null;
-    private Dialogs.CommandLink shutDownWithoutTerminating = null;
 
     @Override
     public void start(Stage stage) throws Exception
@@ -104,37 +96,34 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
 
-        dontShutDown = new Dialogs.CommandLink(i18nBundle.getString("dialogs.dontShutDownTitle"),
-                                               i18nBundle.getString("dialogs.dontShutDownMessage"));
-        shutDownAndTerminate = new Dialogs.CommandLink(i18nBundle.getString(
-            "dialogs.shutDownAndTerminateTitle"), i18nBundle.getString(
-                                                           "dialogs.shutDownAndTerminateMessage"));
-        shutDownWithoutTerminating = new Dialogs.CommandLink(i18nBundle.getString(
-            "dialogs.shutDownAndDontTerminateTitle"), i18nBundle.getString(
-                                                                 "dialogs.shutDownAndDontTerminateMessage"));
-
         stage.setOnCloseRequest((WindowEvent event) ->
         {
             boolean transferringDataToPrinter = false;
 
-            for (Printer printer : commsManager.getPrintStatusList())
+            for (Printer printer : Lookup.getConnectedPrinters())
             {
-                transferringDataToPrinter = printer.getPrintQueue().sendingDataToPrinterProperty().get();
-                if (transferringDataToPrinter)
-                {
-                    Action shutDownResponse = Dialogs.create().title(i18nBundle.getString(
-                        "dialogs.printJobsAreStillTransferringTitle"))
-                        .message(
-                            i18nBundle.getString("dialogs.printJobsAreStillTransferringMessage"))
-                        .masthead(null)
-                        .showCommandLinks(dontShutDown, dontShutDown, shutDownAndTerminate);
+                transferringDataToPrinter = transferringDataToPrinter | printer.printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
+            }
 
-                    if (shutDownResponse == dontShutDown)
+            if (transferringDataToPrinter)
+            {
+                boolean shutDownAnyway = Lookup.getSystemNotificationHandler().showJobsTransferringShutdownDialog();
+
+                if (shutDownAnyway)
+                {
+                    for (Printer printer : Lookup.getConnectedPrinters())
                     {
-                        printer.getPrintQueue().abortPrint();
-                        event.consume();
+                        try
+                        {
+                            printer.cancel(null);
+                        } catch (PrinterException ex)
+                        {
+                            steno.error("Error cancelling print on printer " + printer.getPrinterIdentity().printerFriendlyNameProperty().get() + " - " + ex.getMessage());
+                        }
                     }
-                    break;
+                } else
+                {
+                    event.consume();
                 }
             }
         });

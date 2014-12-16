@@ -13,6 +13,7 @@ import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
+import celtech.utils.tasks.TaskResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -39,7 +40,7 @@ import libertysystems.stenographer.StenographerFactory;
  */
 public class AutoMaker extends Application implements AutoUpdateCompletionListener
 {
-
+    
     private static final Stenographer steno = StenographerFactory.getStenographer(
         AutoMaker.class.getName());
     private static DisplayManager displayManager = null;
@@ -47,7 +48,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private static Configuration configuration = null;
     private RoboxCommsManager commsManager = null;
     private AutoUpdate autoUpdater = null;
-
+    private List<Printer> waitingForCancelFrom = new ArrayList<>();
+    
     @Override
     public void start(Stage stage) throws Exception
     {
@@ -68,18 +70,17 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //        }
 
 //        setAppUserIDForWindows();
-
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
             "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
                                 new Image(getClass().getResourceAsStream(
                                         "/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
                                 new Image(getClass().getResourceAsStream(
                                         "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
-
+        
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         Lookup.initialise();
         commsManager = RoboxCommsManager.getInstance(ApplicationConfiguration.getBinariesDirectory());
-
+        
         try
         {
             configuration = Configuration.getInstance();
@@ -87,35 +88,40 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             steno.error("Couldn't load application configuration");
         }
-
+        
         displayManager = DisplayManager.getInstance();
         i18nBundle = DisplayManager.getLanguageBundle();
-
+        
         checkMachineTypeRecognised(i18nBundle);
-
+        
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
-
+        
         stage.setOnCloseRequest((WindowEvent event) ->
         {
             boolean transferringDataToPrinter = false;
-
+            
             for (Printer printer : Lookup.getConnectedPrinters())
             {
                 transferringDataToPrinter = transferringDataToPrinter | printer.printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
             }
-
+            
             if (transferringDataToPrinter)
             {
                 boolean shutDownAnyway = Lookup.getSystemNotificationHandler().showJobsTransferringShutdownDialog();
-
+                
                 if (shutDownAnyway)
                 {
                     for (Printer printer : Lookup.getConnectedPrinters())
                     {
+                        waitingForCancelFrom.add(printer);
+                        
                         try
                         {
-                            printer.cancel(null);
+                            printer.cancel((TaskResponse taskResponse) ->
+                            {
+                                waitingForCancelFrom.remove(printer);
+                            });
                         } catch (PrinterException ex)
                         {
                             steno.error("Error cancelling print on printer " + printer.getPrinterIdentity().printerFriendlyNameProperty().get() + " - " + ex.getMessage());
@@ -127,9 +133,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 }
             }
         });
-
+        
         final AutoUpdateCompletionListener completeListener = this;
-
+        
         stage.setOnShown((WindowEvent event) ->
         {
             autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(),
@@ -140,12 +146,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
-
+        
         displayManager = DisplayManager.getInstance();
         i18nBundle = DisplayManager.getLanguageBundle();
-
+        
         VBox statusSupplementaryPage = null;
-
+        
         try
         {
             URL mainPageURL = getClass().getResource(
@@ -158,18 +164,18 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             steno.error("Failed to load supplementary status page:" + ex.getMessage());
             System.err.println(ex);
         }
-
+        
         VBox statusSlideOutHandle = displayManager.getSidePanelSlideOutHandle(ApplicationMode.STATUS);
-
+        
         if (statusSlideOutHandle != null)
         {
             statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
             VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
         }
-
+        
         stage.show();
     }
-
+    
     @Override
     public void autoUpdateComplete(boolean requiresShutdown
     )
@@ -194,17 +200,24 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     {
         launch(args);
     }
-
+    
     @Override
     public void stop() throws Exception
     {
+        int timeoutStrikes = 3;
+        while (waitingForCancelFrom.size() > 0 && timeoutStrikes > 0)
+        {
+            Thread.sleep(1000);
+            timeoutStrikes--;
+        }
+        
         autoUpdater.shutdown();
         displayManager.shutdown();
         commsManager.shutdown();
         ApplicationConfiguration.writeApplicationMemory();
-
+        
         TaskController taskController = TaskController.getInstance();
-
+        
         if (taskController.getNumberOfManagedTasks() > 0)
         {
             Thread.sleep(5000);

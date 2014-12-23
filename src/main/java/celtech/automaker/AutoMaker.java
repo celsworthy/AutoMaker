@@ -211,9 +211,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             timeoutStrikes--;
         }
         
+        commsManager.shutdown();
         autoUpdater.shutdown();
         displayManager.shutdown();
-        commsManager.shutdown();
         ApplicationConfiguration.writeApplicationMemory();
         
         TaskController taskController = TaskController.getInstance();

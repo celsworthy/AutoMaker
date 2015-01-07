@@ -31,8 +31,10 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
+import libertysystems.stenographer.LogLevel;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
+import sun.misc.ThreadGroupUtils;
 
 /**
  *
@@ -40,7 +42,7 @@ import libertysystems.stenographer.StenographerFactory;
  */
 public class AutoMaker extends Application implements AutoUpdateCompletionListener
 {
-    
+
     private static final Stenographer steno = StenographerFactory.getStenographer(
         AutoMaker.class.getName());
     private static DisplayManager displayManager = null;
@@ -49,7 +51,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private RoboxCommsManager commsManager = null;
     private AutoUpdate autoUpdater = null;
     private List<Printer> waitingForCancelFrom = new ArrayList<>();
-    
+
     @Override
     public void start(Stage stage) throws Exception
     {
@@ -76,11 +78,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                         "/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
                                 new Image(getClass().getResourceAsStream(
                                         "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
-        
+
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         Lookup.initialise();
-        commsManager = RoboxCommsManager.getInstance(ApplicationConfiguration.getBinariesDirectory());
-        
+        commsManager = RoboxCommsManager.
+            getInstance(ApplicationConfiguration.getBinariesDirectory());
+
         try
         {
             configuration = Configuration.getInstance();
@@ -88,34 +91,36 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             steno.error("Couldn't load application configuration");
         }
-        
+
         displayManager = DisplayManager.getInstance();
         i18nBundle = DisplayManager.getLanguageBundle();
-        
+
         checkMachineTypeRecognised(i18nBundle);
-        
+
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
-        
+
         stage.setOnCloseRequest((WindowEvent event) ->
         {
             boolean transferringDataToPrinter = false;
-            
+
             for (Printer printer : Lookup.getConnectedPrinters())
             {
-                transferringDataToPrinter = transferringDataToPrinter | printer.printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
+                transferringDataToPrinter = transferringDataToPrinter | printer.
+                    printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
             }
-            
+
             if (transferringDataToPrinter)
             {
-                boolean shutDownAnyway = Lookup.getSystemNotificationHandler().showJobsTransferringShutdownDialog();
-                
+                boolean shutDownAnyway = Lookup.getSystemNotificationHandler().
+                    showJobsTransferringShutdownDialog();
+
                 if (shutDownAnyway)
                 {
                     for (Printer printer : Lookup.getConnectedPrinters())
                     {
                         waitingForCancelFrom.add(printer);
-                        
+
                         try
                         {
                             printer.cancel((TaskResponse taskResponse) ->
@@ -124,7 +129,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                             });
                         } catch (PrinterException ex)
                         {
-                            steno.error("Error cancelling print on printer " + printer.getPrinterIdentity().printerFriendlyNameProperty().get() + " - " + ex.getMessage());
+                            steno.error("Error cancelling print on printer " + printer.
+                                getPrinterIdentity().printerFriendlyNameProperty().get() + " - "
+                                + ex.getMessage());
                         }
                     }
                 } else
@@ -133,9 +140,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 }
             }
         });
-        
+
         final AutoUpdateCompletionListener completeListener = this;
-        
+
         stage.setOnShown((WindowEvent event) ->
         {
             autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(),
@@ -146,12 +153,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
-        
+
         displayManager = DisplayManager.getInstance();
         i18nBundle = DisplayManager.getLanguageBundle();
-        
+
         VBox statusSupplementaryPage = null;
-        
+
         try
         {
             URL mainPageURL = getClass().getResource(
@@ -164,18 +171,19 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             steno.error("Failed to load supplementary status page:" + ex.getMessage());
             System.err.println(ex);
         }
-        
-        VBox statusSlideOutHandle = displayManager.getSidePanelSlideOutHandle(ApplicationMode.STATUS);
-        
+
+        VBox statusSlideOutHandle = displayManager.
+            getSidePanelSlideOutHandle(ApplicationMode.STATUS);
+
         if (statusSlideOutHandle != null)
         {
             statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
             VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
         }
-        
+
         stage.show();
     }
-    
+
     @Override
     public void autoUpdateComplete(boolean requiresShutdown
     )
@@ -191,8 +199,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     /**
-     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as fallback in case the application can not be launched through deployment artifacts, e.g., in IDEs
-     * with limited FX support. NetBeans ignores main().
+     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as
+     * fallback in case the application can not be launched through deployment artifacts, e.g., in
+     * IDEs with limited FX support. NetBeans ignores main().
      *
      * @param args the command line arguments
      */
@@ -200,7 +209,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     {
         launch(args);
     }
-    
+
     @Override
     public void stop() throws Exception
     {
@@ -210,14 +219,19 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Thread.sleep(1000);
             timeoutStrikes--;
         }
-        
+
         commsManager.shutdown();
         autoUpdater.shutdown();
         displayManager.shutdown();
         ApplicationConfiguration.writeApplicationMemory();
-        
+
+        if (steno.getCurrentLogLevel().isLoggable(LogLevel.DEBUG))
+        {
+            outputRunningThreads();
+        }
+
         TaskController taskController = TaskController.getInstance();
-        
+
         if (taskController.getNumberOfManagedTasks() > 0)
         {
             Thread.sleep(5000);
@@ -251,4 +265,47 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            Native.register("shell32");
 //        }
 //    }
+    /**
+     * Indicates whether any threads are believed to be running
+     *
+     * @return
+     */
+    private boolean areThreadsStillRunning()
+    {
+        ThreadGroup rootThreadGroup = ThreadGroupUtils.getRootThreadGroup();
+        int numberOfThreads = rootThreadGroup.activeCount();
+        return numberOfThreads > 0;
+    }
+
+    /**
+     * Outputs running thread names if there are any Returns true if running threads were found
+     *
+     * @return
+     */
+    private boolean outputRunningThreads()
+    {
+        ThreadGroup rootThreadGroup = ThreadGroupUtils.getRootThreadGroup();
+        int numberOfThreads = rootThreadGroup.activeCount();
+        Thread[] threadList = new Thread[numberOfThreads];
+        rootThreadGroup.enumerate(threadList, true);
+
+        if (numberOfThreads > 0)
+        {
+            steno.info("There are " + numberOfThreads + " threads running:");
+            for (Thread th : threadList)
+            {
+                steno.passthrough("---------------------------------------------------");
+                steno.passthrough("THREAD DUMP:" + th.getName()
+                    + " isDaemon=" + th.isDaemon()
+                    + " isAlive=" + th.isAlive());
+                for (StackTraceElement element : th.getStackTrace())
+                {
+                    steno.passthrough(">>>" + element.toString());
+                }
+                steno.passthrough("---------------------------------------------------");
+            }
+        }
+
+        return numberOfThreads > 0;
+    }
 }

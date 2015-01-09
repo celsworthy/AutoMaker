@@ -6,7 +6,7 @@
         <ApplicationShortName>AutoMaker</ApplicationShortName>
         <ApplicationDataStorageDirectory>$APPDATA_HOME$/#ApplicationConfiguration:AppFolderName#/</ApplicationDataStorageDirectory>
         <UserDataStorageDirectory>$USER_HOME$/#ApplicationConfiguration:AppFolderName#/</UserDataStorageDirectory>
-        <requiredFirmwareVersion>699</requiredFirmwareVersion>
+        <requiredFirmwareVersion>700</requiredFirmwareVersion>
         <DefaultMode>Normal</DefaultMode>
         <DefaultLocaleLanguageTag>en-GB</DefaultLocaleLanguageTag>
         <FakeInstallDirectory>C:\Program Files\CEL/AutoMaker/</FakeInstallDirectory>
@@ -15,6 +15,6 @@
        <logfilename>#ApplicationConfiguration:ApplicationDataStorageDirectory#/AutoMaker.log</logfilename>
        <logmode>LOCAL</logmode>
        <logtee>F</logtee>
-       <loglevel>INFO</loglevel>
+       <loglevel>TRACE</loglevel>
     </Stenographer>
 </root>

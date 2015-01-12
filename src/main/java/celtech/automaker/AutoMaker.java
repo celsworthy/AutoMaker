@@ -43,8 +43,11 @@ import sun.misc.ThreadGroupUtils;
 public class AutoMaker extends Application implements AutoUpdateCompletionListener
 {
 
-    private static final Stenographer steno = StenographerFactory.getStenographer(
-        AutoMaker.class.getName());
+    private static final Stenographer steno;
+    static {
+        System.out.println("AutoMaker - get steno logger");
+        steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
+    }
     private static DisplayManager displayManager = null;
     private ResourceBundle i18nBundle = null;
     private static Configuration configuration = null;
@@ -72,6 +75,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //        }
 
 //        setAppUserIDForWindows();
+        
+        steno.info("Starting AutoMaker...");
+        steno.info("Starting AutoMaker - loading icons...");
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
             "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
                                 new Image(getClass().getResourceAsStream(
@@ -80,7 +86,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                         "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
 
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+        steno.info("Starting AutoMaker - installation directory is " + installDir);
         Lookup.initialise();
+        steno.info("Starting AutoMaker - starting comms manager...");
         commsManager = RoboxCommsManager.
             getInstance(ApplicationConfiguration.getBinariesDirectory());
 
@@ -154,9 +162,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
 
-        displayManager = DisplayManager.getInstance();
-        i18nBundle = DisplayManager.getLanguageBundle();
-
         VBox statusSupplementaryPage = null;
 
         try
@@ -181,6 +186,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
         }
 
+        steno.info("Starting AutoMaker - show main stage...");
         stage.show();
     }
 

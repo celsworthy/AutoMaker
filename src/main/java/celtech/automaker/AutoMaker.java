@@ -14,7 +14,6 @@ import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import celtech.utils.tasks.TaskResponse;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -101,7 +100,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         }
 
         displayManager = DisplayManager.getInstance();
-        i18nBundle = DisplayManager.getLanguageBundle();
+        i18nBundle = Lookup.getLanguageBundle();
 
         checkMachineTypeRecognised(i18nBundle);
 

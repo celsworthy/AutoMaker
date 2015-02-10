@@ -13,6 +13,7 @@ import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
+import celtech.utils.application.ApplicationUtils;
 import celtech.utils.tasks.TaskResponse;
 import java.io.IOException;
 import java.net.URL;
@@ -44,7 +45,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
     private static final Stenographer steno;
     static {
-        System.out.println("AutoMaker - get steno logger");
         steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
     }
     private static DisplayManager displayManager = null;
@@ -75,8 +75,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
 //        setAppUserIDForWindows();
         
-        steno.info("Starting AutoMaker...");
-        steno.info("Starting AutoMaker - loading icons...");
+        steno.debug("Starting AutoMaker...");
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
             "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
                                 new Image(getClass().getResourceAsStream(
@@ -85,9 +84,11 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                         "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
 
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
-        steno.info("Starting AutoMaker - installation directory is " + installDir);
+        
         Lookup.initialise();
-        steno.info("Starting AutoMaker - starting comms manager...");
+
+        ApplicationUtils.outputApplicationBanner(this.getClass());
+
         commsManager = RoboxCommsManager.
             getInstance(ApplicationConfiguration.getBinariesDirectory());
 

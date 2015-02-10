@@ -86,7 +86,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         steno.info("Starting AutoMaker - installation directory is " + installDir);
-        Lookup.initialise();
+        Lookup.setupDefaultValues();
         steno.info("Starting AutoMaker - starting comms manager...");
         commsManager = RoboxCommsManager.
             getInstance(ApplicationConfiguration.getBinariesDirectory());

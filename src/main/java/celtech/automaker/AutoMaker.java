@@ -13,6 +13,7 @@ import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
+import celtech.utils.application.ApplicationUtils;
 import celtech.utils.tasks.TaskResponse;
 import java.io.IOException;
 import java.net.URL;
@@ -41,10 +42,11 @@ import sun.misc.ThreadGroupUtils;
  */
 public class AutoMaker extends Application implements AutoUpdateCompletionListener
 {
-
+    
     private static final Stenographer steno;
-    static {
-        System.out.println("AutoMaker - get steno logger");
+
+    static
+    {
         steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
     }
     private static DisplayManager displayManager = null;
@@ -53,7 +55,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private RoboxCommsManager commsManager = null;
     private AutoUpdate autoUpdater = null;
     private List<Printer> waitingForCancelFrom = new ArrayList<>();
-
+    
     @Override
     public void start(Stage stage) throws Exception
     {
@@ -74,23 +76,26 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //        }
 
 //        setAppUserIDForWindows();
-        
-        steno.info("Starting AutoMaker...");
-        steno.info("Starting AutoMaker - loading icons...");
+        steno.debug("Starting AutoMaker...");
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
             "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
                                 new Image(getClass().getResourceAsStream(
                                         "/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
                                 new Image(getClass().getResourceAsStream(
                                         "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
-
+        
         String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         steno.info("Starting AutoMaker - installation directory is " + installDir);
         Lookup.setupDefaultValues();
         steno.info("Starting AutoMaker - starting comms manager...");
+        
+        Lookup.initialise();
+        
+        ApplicationUtils.outputApplicationStartupBanner(this.getClass());
+        
         commsManager = RoboxCommsManager.
             getInstance(ApplicationConfiguration.getBinariesDirectory());
-
+        
         try
         {
             configuration = Configuration.getInstance();
@@ -98,36 +103,37 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             steno.error("Couldn't load application configuration");
         }
-
+        
         displayManager = DisplayManager.getInstance();
         i18nBundle = Lookup.getLanguageBundle();
-
+        
         checkMachineTypeRecognised(i18nBundle);
-
+        
         String applicationName = i18nBundle.getString("application.title");
         displayManager.configureDisplayManager(stage, applicationName);
-
+        
         stage.setOnCloseRequest((WindowEvent event) ->
         {
             boolean transferringDataToPrinter = false;
-
+            boolean willShutDown = true;
+            
             for (Printer printer : Lookup.getConnectedPrinters())
             {
                 transferringDataToPrinter = transferringDataToPrinter | printer.
                     printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
             }
-
+            
             if (transferringDataToPrinter)
             {
                 boolean shutDownAnyway = Lookup.getSystemNotificationHandler().
                     showJobsTransferringShutdownDialog();
-
+                
                 if (shutDownAnyway)
                 {
                     for (Printer printer : Lookup.getConnectedPrinters())
                     {
                         waitingForCancelFrom.add(printer);
-
+                        
                         try
                         {
                             printer.cancel((TaskResponse taskResponse) ->
@@ -144,12 +150,21 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 } else
                 {
                     event.consume();
+                    willShutDown = false;
                 }
             }
+            
+            if (willShutDown)
+            {
+                ApplicationUtils.outputApplicationShutdownBanner();
+            } else
+            {
+                steno.info("Shutdown aborted - transfers to printer were in progress");
+            }
         });
-
+        
         final AutoUpdateCompletionListener completeListener = this;
-
+        
         stage.setOnShown((WindowEvent event) ->
         {
             autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(),
@@ -160,9 +175,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
-
+        
         VBox statusSupplementaryPage = null;
-
+        
         try
         {
             URL mainPageURL = getClass().getResource(
@@ -175,20 +190,20 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             steno.error("Failed to load supplementary status page:" + ex.getMessage());
             System.err.println(ex);
         }
-
+        
         VBox statusSlideOutHandle = displayManager.
             getSidePanelSlideOutHandle(ApplicationMode.STATUS);
-
+        
         if (statusSlideOutHandle != null)
         {
             statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
             VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
         }
-
+        
         steno.info("Starting AutoMaker - show main stage...");
         stage.show();
     }
-
+    
     @Override
     public void autoUpdateComplete(boolean requiresShutdown
     )
@@ -214,7 +229,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     {
         launch(args);
     }
-
+    
     @Override
     public void stop() throws Exception
     {
@@ -224,19 +239,19 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Thread.sleep(1000);
             timeoutStrikes--;
         }
-
+        
         commsManager.shutdown();
         autoUpdater.shutdown();
         displayManager.shutdown();
         ApplicationConfiguration.writeApplicationMemory();
-
+        
         if (steno.getCurrentLogLevel().isLoggable(LogLevel.DEBUG))
         {
             outputRunningThreads();
         }
-
+        
         TaskController taskController = TaskController.getInstance();
-
+        
         if (taskController.getNumberOfManagedTasks() > 0)
         {
             Thread.sleep(5000);
@@ -293,7 +308,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         int numberOfThreads = rootThreadGroup.activeCount();
         Thread[] threadList = new Thread[numberOfThreads];
         rootThreadGroup.enumerate(threadList, true);
-
+        
         if (numberOfThreads > 0)
         {
             steno.info("There are " + numberOfThreads + " threads running:");
@@ -310,7 +325,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 steno.passthrough("---------------------------------------------------");
             }
         }
-
+        
         return numberOfThreads > 0;
     }
 }

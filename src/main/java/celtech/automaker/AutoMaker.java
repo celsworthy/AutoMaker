@@ -102,6 +102,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         }
         
         displayManager = DisplayManager.getInstance();
+        Lookup.setSpinnerControl(displayManager);
+        
         i18nBundle = Lookup.getLanguageBundle();
         
         checkMachineTypeRecognised(i18nBundle);

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
+import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.application.Platform;
@@ -42,6 +43,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.LogLevel;
@@ -207,16 +209,18 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     @Override
-    public void autoUpdateComplete(boolean requiresShutdown
-    )
+    public void autoUpdateComplete(boolean requiresShutdown)
     {
         if (requiresShutdown)
         {
             Platform.exit();
         } else
         {
-            check3DSupported(i18nBundle);
-            commsManager.start();
+            if (check3DSupported(i18nBundle))
+            {
+                WelcomeToApplicationManager.displayWelcomeIfRequired();
+                commsManager.start();
+            }
         }
     }
 
@@ -333,6 +337,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
     private void showSplash(Stage splashStage, Task<Boolean> mainStagePreparer)
     {
+        splashStage.setAlwaysOnTop(true);
         attachIcons(splashStage);
 
         Image splashImage = new Image(getClass().getResourceAsStream(
@@ -375,7 +380,14 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             if (newState == Worker.State.SUCCEEDED)
             {
                 showMainStage();
-                splashStage.close();
+                FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
+                fadeSplash.setFromValue(1.0);
+                fadeSplash.setToValue(0.0);
+                fadeSplash.setOnFinished(actionEvent ->
+                {
+                    splashStage.hide();
+                });
+                fadeSplash.play();
             }
         });
 
@@ -413,6 +425,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
+        mainStage.setAlwaysOnTop(false);
         mainStage.show();
     }
 }

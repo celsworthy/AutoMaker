@@ -70,7 +70,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private RoboxCommsManager commsManager = null;
     private AutoUpdate autoUpdater = null;
     private List<Printer> waitingForCancelFrom = new ArrayList<>();
-    private Stage splashStage;
     private Stage mainStage;
     private Pane splashLayout;
     private double splashWidth;
@@ -194,8 +193,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         };
 
-        splashStage = stage;
-        showSplash(splashStage, mainStagePreparer);
+        showSplash(stage, mainStagePreparer);
     }
 
     private void attachIcons(Stage stage)

@@ -15,9 +15,9 @@
                         <fx:include source="/celtech/resources/fxml/utilityPanels/headEEPROM.fxml"/>
                     </content>
                 </Tab>
-                <Tab text="%genericFirstLetterCapitalised.Reel">
+                <Tab text="%tweekPanel.title">
                     <content>
-                        <fx:include source="/celtech/resources/fxml/utilityPanels/ReelDataPanel.fxml"/>
+                        <fx:include source="/celtech/resources/fxml/utilityPanels/tweekPanel.fxml"/>
                     </content>
                 </Tab>                
                 <Tab text="%maintenancePanel.title">

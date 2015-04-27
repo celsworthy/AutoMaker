@@ -15,6 +15,7 @@ import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import celtech.utils.application.ApplicationUtils;
 import celtech.utils.tasks.TaskResponse;
+import celtech.webserver.LocalWebInterface;
 import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -74,6 +75,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private Pane splashLayout;
     private double splashWidth;
     private double splashHeight;
+    private LocalWebInterface localWebInterface = null;
 
     @Override
     public void start(Stage stage) throws Exception
@@ -237,6 +239,11 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void stop() throws Exception
     {
+        if (localWebInterface != null)
+        {
+            localWebInterface.stop();
+        }
+        
         int timeoutStrikes = 3;
         while (waitingForCancelFrom.size() > 0 && timeoutStrikes > 0)
         {
@@ -421,6 +428,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                          completeListener);
             autoUpdater.start();
 
+            localWebInterface = new LocalWebInterface();
+            localWebInterface.start();
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
         mainStage.setAlwaysOnTop(false);

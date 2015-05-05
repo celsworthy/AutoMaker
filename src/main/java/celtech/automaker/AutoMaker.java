@@ -119,8 +119,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                     for (Printer printer : Lookup.getConnectedPrinters())
                     {
-                        transferringDataToPrinter = transferringDataToPrinter | printer.
-                            printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
+                        transferringDataToPrinter = transferringDataToPrinter |
+                            printer.getPrintEngine().transferGCodeToPrinterService.isRunning();
                     }
 
                     if (transferringDataToPrinter)

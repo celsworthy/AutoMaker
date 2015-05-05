@@ -428,8 +428,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                          completeListener);
             autoUpdater.start();
 
-            localWebInterface = new LocalWebInterface();
-            localWebInterface.start();
+//            localWebInterface = new LocalWebInterface();
+//            localWebInterface.start();
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
         mainStage.setAlwaysOnTop(false);

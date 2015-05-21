@@ -5,7 +5,6 @@ import celtech.appManager.ApplicationMode;
 import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
-import celtech.printerControl.PrinterStatus;
 import celtech.printerControl.comms.RoboxCommsManager;
 import celtech.printerControl.model.Printer;
 import celtech.printerControl.model.PrinterException;
@@ -269,11 +268,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         TaskController taskController = TaskController.getInstance();
 
-        if (taskController.getNumberOfManagedTasks() > 0)
-        {
-            Thread.sleep(5000);
-            taskController.shutdownAllManagedTasks();
-        }
+        Thread.sleep(5000);
+        taskController.shutdownAllManagedTasks();
     }
 
 //    private void setAppUserIDForWindows()
@@ -439,6 +435,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
         mainStage.setAlwaysOnTop(false);
+//        mainStage.setMaxHeight(600);
+//        mainStage.setMaxWidth(600);
         mainStage.show();
     }
 }

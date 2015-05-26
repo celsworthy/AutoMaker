@@ -17,7 +17,7 @@
                 </Tab>
                 <Tab text="%tweekPanel.title">
                     <content>
-                        <fx:include source="/celtech/resources/fxml/utilityPanels/tweekPanel.fxml"/>
+                        <fx:include source="/celtech/resources/fxml/utilityPanels/tweakPanel.fxml"/>
                     </content>
                 </Tab>                
                 <Tab text="%maintenancePanel.title">

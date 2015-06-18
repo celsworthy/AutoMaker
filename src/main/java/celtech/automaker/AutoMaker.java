@@ -89,104 +89,113 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             @Override
             protected Boolean call() throws InterruptedException
             {
-                attachIcons(mainStage);
-
-                commsManager = RoboxCommsManager.
-                    getInstance(ApplicationConfiguration.getBinariesDirectory());
-
                 try
                 {
-                    configuration = Configuration.getInstance();
-                } catch (ConfigNotLoadedException ex)
-                {
-                    steno.error("Couldn't load application configuration");
-                }
+                    attachIcons(mainStage);
+                    
+                    commsManager = RoboxCommsManager.
+                        getInstance(ApplicationConfiguration.getBinariesDirectory());
 
-                displayManager = DisplayManager.getInstance();
-                i18nBundle = Lookup.getLanguageBundle();
-
-                checkMachineTypeRecognised(i18nBundle);
-
-                String applicationName = i18nBundle.getString("application.title");
-                displayManager.configureDisplayManager(mainStage, applicationName);
-
-                mainStage.setOnCloseRequest((WindowEvent event) ->
-                {
-                    boolean transferringDataToPrinter = false;
-                    boolean willShutDown = true;
-
-                    for (Printer printer : Lookup.getConnectedPrinters())
+                    try
                     {
-                        transferringDataToPrinter = transferringDataToPrinter | printer.
-                            printerStatusProperty().get().equals(PrinterStatus.SENDING_TO_PRINTER);
+                        configuration = Configuration.getInstance();
+                    } catch (ConfigNotLoadedException ex)
+                    {
+                        steno.error("Couldn't load application configuration");
                     }
 
-                    if (transferringDataToPrinter)
+                    displayManager = DisplayManager.getInstance();
+                    i18nBundle = Lookup.getLanguageBundle();
+
+                    checkMachineTypeRecognised(i18nBundle);
+
+                    String applicationName = i18nBundle.getString("application.title");
+                    displayManager.configureDisplayManager(mainStage, applicationName);
+
+                    mainStage.setOnCloseRequest((WindowEvent event) ->
                     {
-                        boolean shutDownAnyway = Lookup.getSystemNotificationHandler().
-                            showJobsTransferringShutdownDialog();
+                        boolean transferringDataToPrinter = false;
+                        boolean willShutDown = true;
 
-                        if (shutDownAnyway)
+                        for (Printer printer : Lookup.getConnectedPrinters())
                         {
-                            for (Printer printer : Lookup.getConnectedPrinters())
-                            {
-                                waitingForCancelFrom.add(printer);
+                            transferringDataToPrinter = transferringDataToPrinter | printer.
+                                printerStatusProperty().get().equals(
+                                    PrinterStatus.SENDING_TO_PRINTER);
+                        }
 
-                                try
+                        if (transferringDataToPrinter)
+                        {
+                            boolean shutDownAnyway = Lookup.getSystemNotificationHandler().
+                                showJobsTransferringShutdownDialog();
+
+                            if (shutDownAnyway)
+                            {
+                                for (Printer printer : Lookup.getConnectedPrinters())
                                 {
-                                    printer.cancel((TaskResponse taskResponse) ->
+                                    waitingForCancelFrom.add(printer);
+
+                                    try
                                     {
-                                        waitingForCancelFrom.remove(printer);
-                                    });
-                                } catch (PrinterException ex)
-                                {
-                                    steno.error("Error cancelling print on printer " + printer.
-                                        getPrinterIdentity().printerFriendlyNameProperty().get()
-                                        + " - "
-                                        + ex.getMessage());
+                                        printer.cancel((TaskResponse taskResponse) ->
+                                        {
+                                            waitingForCancelFrom.remove(printer);
+                                        });
+                                    } catch (PrinterException ex)
+                                    {
+                                        steno.error("Error cancelling print on printer " + printer.
+                                            getPrinterIdentity().printerFriendlyNameProperty().get()
+                                            + " - "
+                                            + ex.getMessage());
+                                    }
                                 }
+                            } else
+                            {
+                                event.consume();
+                                willShutDown = false;
                             }
+                        }
+
+                        if (willShutDown)
+                        {
+                            ApplicationUtils.outputApplicationShutdownBanner();
+                            Platform.exit();
                         } else
                         {
-                            event.consume();
-                            willShutDown = false;
+                            steno.info("Shutdown aborted - transfers to printer were in progress");
                         }
+                    });
+
+                    VBox statusSupplementaryPage = null;
+
+                    try
+                    {
+                        URL mainPageURL = getClass().getResource(
+                            "/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
+                        FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(
+                            mainPageURL,
+                            i18nBundle);
+                        statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.
+                            load();
+                    } catch (IOException ex)
+                    {
+                        steno.error("Failed to load supplementary status page:" + ex.getMessage());
+                        System.err.println(ex);
                     }
 
-                    if (willShutDown)
+
+                    VBox statusSlideOutHandle = displayManager.
+                        getSidePanelSlideOutHandle(ApplicationMode.STATUS);
+
+                    if (statusSlideOutHandle != null)
                     {
-                        ApplicationUtils.outputApplicationShutdownBanner();
-                        Platform.exit();
-                    } else
-                    {
-                        steno.info("Shutdown aborted - transfers to printer were in progress");
+                        statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
+                        VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
                     }
-                });
-
-                VBox statusSupplementaryPage = null;
-
-                try
-                {
-                    URL mainPageURL = getClass().getResource(
-                        "/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
-                    FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(
-                        mainPageURL,
-                        i18nBundle);
-                    statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.
-                        load();
-                } catch (IOException ex)
-                {
-                    steno.error("Failed to load supplementary status page:" + ex.getMessage());
-                    System.err.println(ex);
                 }
-
-                VBox statusSlideOutHandle = displayManager.
-                    getSidePanelSlideOutHandle(ApplicationMode.STATUS);
-
-                if (statusSlideOutHandle != null)
+                catch (Exception ex)
                 {
-                    statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
-                    VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
+                    ex.printStackTrace();
                 }
                 return false;
             }

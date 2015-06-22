@@ -91,26 +91,33 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             {
                 try
                 {
+                    steno.debug("main stage - start");
                     attachIcons(mainStage);
                     
+                    steno.debug("get comms manager");
                     commsManager = RoboxCommsManager.
                         getInstance(ApplicationConfiguration.getBinariesDirectory());
 
                     try
                     {
+                        steno.debug("get configuration");
                         configuration = Configuration.getInstance();
                     } catch (ConfigNotLoadedException ex)
                     {
                         steno.error("Couldn't load application configuration");
                     }
 
+                    steno.debug("get display manager");
                     displayManager = DisplayManager.getInstance();
+                    steno.debug("get lookup");
                     i18nBundle = Lookup.getLanguageBundle();
-
+                    steno.debug("check machine type");
                     checkMachineTypeRecognised(i18nBundle);
 
                     String applicationName = i18nBundle.getString("application.title");
+                    steno.debug("configure display manager");
                     displayManager.configureDisplayManager(mainStage, applicationName);
+                    steno.debug("end configure display manager");
 
                     mainStage.setOnCloseRequest((WindowEvent event) ->
                     {
@@ -192,6 +199,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                         statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
                         VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
                     }
+                    steno.debug("main stage - end");
                 }
                 catch (Exception ex)
                 {
@@ -344,6 +352,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
     private void showSplash(Stage splashStage, Task<Boolean> mainStagePreparer)
     {
+        steno.debug("show splash - start");
         splashStage.setAlwaysOnTop(true);
         attachIcons(splashStage);
 
@@ -386,7 +395,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             if (newState == Worker.State.SUCCEEDED)
             {
+                steno.debug("show main stage");
                 showMainStage();
+                steno.debug("end show main stage");
                 FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
                 fadeSplash.setFromValue(1.0);
                 fadeSplash.setToValue(0.0);
@@ -398,6 +409,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             }
         });
 
+        steno.debug("show splash");
         splashStage.show();
 
         Thread aThread = new Thread(() ->
@@ -415,6 +427,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             });
         });
 
+        steno.debug("show splash - start main stage preparer");
         aThread.start();
     }
 

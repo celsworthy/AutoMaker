@@ -201,9 +201,10 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     }
                     steno.debug("main stage - end");
                 }
-                catch (Exception ex)
+                catch (Throwable ex)
                 {
                     ex.printStackTrace();
+                    Platform.exit();
                 }
                 return false;
             }

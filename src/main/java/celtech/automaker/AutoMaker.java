@@ -2,7 +2,6 @@ package celtech.automaker;
 
 import celtech.Lookup;
 import celtech.appManager.ApplicationMode;
-import celtech.appManager.TaskController;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.comms.RoboxCommsManager;
@@ -267,10 +266,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             outputRunningThreads();
         }
 
-        TaskController taskController = TaskController.getInstance();
-
         Thread.sleep(5000);
-        taskController.shutdownAllManagedTasks();
+        Lookup.setShuttingDown(true);
     }
 
 //    private void setAppUserIDForWindows()

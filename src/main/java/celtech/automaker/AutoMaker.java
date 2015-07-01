@@ -95,7 +95,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     attachIcons(mainStage);
 
                     commsManager = RoboxCommsManager.
-                        getInstance(ApplicationConfiguration.getBinariesDirectory());
+                            getInstance(ApplicationConfiguration.getBinariesDirectory());
 
                     try
                     {
@@ -121,13 +121,13 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                         for (Printer printer : Lookup.getConnectedPrinters())
                         {
                             transferringDataToPrinter = transferringDataToPrinter
-                                | printer.getPrintEngine().transferGCodeToPrinterService.isRunning();
+                                    | printer.getPrintEngine().transferGCodeToPrinterService.isRunning();
                         }
 
                         if (transferringDataToPrinter)
                         {
                             boolean shutDownAnyway = Lookup.getSystemNotificationHandler().
-                                showJobsTransferringShutdownDialog();
+                                    showJobsTransferringShutdownDialog();
 
                             if (shutDownAnyway)
                             {
@@ -144,9 +144,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                     } catch (PrinterException ex)
                                     {
                                         steno.error("Error cancelling print on printer " + printer.
-                                            getPrinterIdentity().printerFriendlyNameProperty().get()
-                                            + " - "
-                                            + ex.getMessage());
+                                                getPrinterIdentity().printerFriendlyNameProperty().get()
+                                                + " - "
+                                                + ex.getMessage());
                                     }
                                 }
                             } else
@@ -171,12 +171,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     try
                     {
                         URL mainPageURL = getClass().getResource(
-                            "/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
+                                "/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
                         FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(
-                            mainPageURL,
-                            i18nBundle);
+                                mainPageURL,
+                                i18nBundle);
                         statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.
-                            load();
+                                load();
                     } catch (IOException ex)
                     {
                         steno.error("Failed to load supplementary status page:" + ex.getMessage());
@@ -184,7 +184,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     }
 
                     VBox statusSlideOutHandle = displayManager.
-                        getSidePanelSlideOutHandle(ApplicationMode.STATUS);
+                            getSidePanelSlideOutHandle(ApplicationMode.STATUS);
 
                     if (statusSlideOutHandle != null)
                     {
@@ -207,11 +207,11 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private void attachIcons(Stage stage)
     {
         stage.getIcons().addAll(new Image(getClass().getResourceAsStream(
-            "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
-                                new Image(getClass().getResourceAsStream(
-                                        "/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
-                                new Image(getClass().getResourceAsStream(
-                                        "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
+                "/celtech/automaker/resources/images/AutoMakerIcon_256x256.png")),
+                new Image(getClass().getResourceAsStream(
+                                "/celtech/automaker/resources/images/AutoMakerIcon_64x64.png")),
+                new Image(getClass().getResourceAsStream(
+                                "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
     }
 
     @Override
@@ -231,9 +231,10 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     /**
-     * The main() method is ignored in correctly deployed JavaFX application. main() serves only as
-     * fallback in case the application can not be launched through deployment artifacts, e.g., in
-     * IDEs with limited FX support. NetBeans ignores main().
+     * The main() method is ignored in correctly deployed JavaFX application.
+     * main() serves only as fallback in case the application can not be
+     * launched through deployment artifacts, e.g., in IDEs with limited FX
+     * support. NetBeans ignores main().
      *
      * @param args the command line arguments
      */
@@ -312,7 +313,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     }
 
     /**
-     * Outputs running thread names if there are any Returns true if running threads were found
+     * Outputs running thread names if there are any Returns true if running
+     * threads were found
      *
      * @return
      */
@@ -330,8 +332,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             {
                 steno.passthrough("---------------------------------------------------");
                 steno.passthrough("THREAD DUMP:" + th.getName()
-                    + " isDaemon=" + th.isDaemon()
-                    + " isAlive=" + th.isAlive());
+                        + " isDaemon=" + th.isDaemon()
+                        + " isAlive=" + th.isAlive());
                 for (StackTraceElement element : th.getStackTrace())
                 {
                     steno.passthrough(">>>" + element.toString());
@@ -349,8 +351,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         attachIcons(splashStage);
 
         Image splashImage = new Image(getClass().getResourceAsStream(
-            ApplicationConfiguration.imageResourcePath
-            + "Splash - AutoMaker (Drop Shadow) 600x400.png"));
+                ApplicationConfiguration.imageResourcePath
+                + "Splash - AutoMaker (Drop Shadow) 600x400.png"));
         ImageView splash = new ImageView(splashImage);
 
         splashWidth = splashImage.getWidth();
@@ -360,7 +362,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         SimpleDateFormat yearFormatter = new SimpleDateFormat("YYYY");
         String yearString = yearFormatter.format(new Date());
         Text copyrightLabel = new Text("© " + yearString
-            + " CEL Technology Ltd. All Rights Reserved.");
+                + " CEL Technology Ltd. All Rights Reserved.");
         copyrightLabel.getStyleClass().add("splashCopyright");
         AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
         AnchorPane.setLeftAnchor(copyrightLabel, 50.0);
@@ -426,9 +428,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.setOnShown((WindowEvent event) ->
         {
             autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(),
-                                         ApplicationConfiguration.getDownloadModifier(
-                                             ApplicationConfiguration.getApplicationName()),
-                                         completeListener);
+                    ApplicationConfiguration.getDownloadModifier(
+                            ApplicationConfiguration.getApplicationName()),
+                    completeListener);
             autoUpdater.start();
 
 //            localWebInterface = new LocalWebInterface();
@@ -436,8 +438,14 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
         });
         mainStage.setAlwaysOnTop(false);
-//        mainStage.setMaxHeight(600);
-//        mainStage.setMaxWidth(600);
+
+        //set Stage boundaries to visible bounds of the main screen
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        mainStage.setX(primaryScreenBounds.getMinX());
+        mainStage.setY(primaryScreenBounds.getMinY());
+        mainStage.setWidth(primaryScreenBounds.getWidth());
+        mainStage.setHeight(primaryScreenBounds.getHeight());
+
         mainStage.show();
     }
 }

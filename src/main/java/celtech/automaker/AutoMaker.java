@@ -181,15 +181,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                         steno.error("Failed to load supplementary status page:" + ex.getMessage());
                         System.err.println(ex);
                     }
-
-                    VBox statusSlideOutHandle = displayManager.
-                            getSidePanelSlideOutHandle(ApplicationMode.STATUS);
-
-                    if (statusSlideOutHandle != null)
-                    {
-                        statusSlideOutHandle.getChildren().add(0, statusSupplementaryPage);
-                        VBox.setVgrow(statusSupplementaryPage, Priority.ALWAYS);
-                    }
                 } catch (Throwable ex)
                 {
                     ex.printStackTrace();

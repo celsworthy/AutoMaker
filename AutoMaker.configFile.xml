@@ -9,7 +9,7 @@
         <requiredFirmwareVersion>731</requiredFirmwareVersion>
         <DefaultMode>Normal</DefaultMode>
         <DefaultLocaleLanguageTag>en-GB</DefaultLocaleLanguageTag>
-        <FakeInstallDirectory>C:\Program Files\CEL_1.02.00\AutoMaker\</FakeInstallDirectory>
+        <FakeInstallDirectory>C:\Program Files\CEL\AutoMaker\</FakeInstallDirectory>
     </ApplicationConfiguration>
     <Stenographer>
        <logfilename>#ApplicationConfiguration:ApplicationDataStorageDirectory#/AutoMaker.log</logfilename>

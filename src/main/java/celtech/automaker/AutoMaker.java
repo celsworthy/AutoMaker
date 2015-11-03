@@ -420,6 +420,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                             ApplicationConfiguration.getApplicationName()),
                     completeListener);
             autoUpdater.start();
+            displayManager.mainStageShown();
 
 //            localWebInterface = new LocalWebInterface();
 //            localWebInterface.start();

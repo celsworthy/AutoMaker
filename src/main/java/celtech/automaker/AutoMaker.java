@@ -38,6 +38,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -384,6 +385,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 fadeSplash.setOnFinished(actionEvent ->
                 {
                     splashStage.hide();
+                    splashStage.setAlwaysOnTop(false);
                 });
                 fadeSplash.play();
             }
@@ -433,6 +435,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.setY(primaryScreenBounds.getMinY());
         mainStage.setWidth(primaryScreenBounds.getWidth());
         mainStage.setHeight(primaryScreenBounds.getHeight());
+        
+        mainStage.initModality(Modality.WINDOW_MODAL);
 
         mainStage.show();
     }

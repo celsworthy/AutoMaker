@@ -336,6 +336,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
     private void showSplash(Stage splashStage, Task<Boolean> mainStagePreparer)
     {
+        steno.debug("show splash - start");
         splashStage.setAlwaysOnTop(true);
         attachIcons(splashStage);
 
@@ -378,7 +379,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             if (newState == Worker.State.SUCCEEDED)
             {
+                steno.debug("show main stage");
                 showMainStage();
+                steno.debug("end show main stage");
                 FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
                 fadeSplash.setFromValue(1.0);
                 fadeSplash.setToValue(0.0);
@@ -391,6 +394,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             }
         });
 
+        steno.debug("show splash");
         splashStage.show();
 
         Thread aThread = new Thread(() ->
@@ -408,6 +412,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             });
         });
 
+        steno.debug("show splash - start main stage preparer");
         aThread.start();
     }
 

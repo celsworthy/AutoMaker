@@ -5,9 +5,11 @@ import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
 import celtech.roboxbase.BaseLookup;
 import celtech.roboxbase.comms.RoboxCommsManager;
+import celtech.roboxbase.comms.interapp.InterAppCommsConsumer;
 import celtech.roboxbase.configuration.BaseConfiguration;
-import celtech.roboxbase.interappcomms.InterAppCommsListener;
-import celtech.roboxbase.interappcomms.InterAppStartupStatus;
+import celtech.roboxbase.comms.interapp.InterAppCommsThread;
+import celtech.roboxbase.comms.interapp.InterAppRequest;
+import celtech.roboxbase.comms.interapp.InterAppStartupStatus;
 import celtech.roboxbase.printerControl.model.Printer;
 import celtech.roboxbase.printerControl.model.PrinterException;
 import celtech.utils.AutoUpdate;
@@ -18,11 +20,6 @@ import celtech.utils.application.ApplicationUtils;
 import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.BindException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -62,7 +59,7 @@ import sun.misc.ThreadGroupUtils;
  *
  * @author Ian Hudson @ Liberty Systems Limited
  */
-public class AutoMaker extends Application implements AutoUpdateCompletionListener
+public class AutoMaker extends Application implements AutoUpdateCompletionListener, InterAppCommsConsumer
 {
 
     private static final Stenographer steno;
@@ -82,13 +79,23 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private double splashWidth;
     private double splashHeight;
     private LocalWebInterface localWebInterface = null;
-    private final InterAppCommsListener interAppCommsListener = new InterAppCommsListener();
+    private final InterAppCommsThread interAppCommsListener = new InterAppCommsThread();
+    private List<String> modelsToLoadAtStartup = new ArrayList<>();
 
     @Override
     public void init() throws Exception
     {
-        InterAppStartupStatus startupStatus = interAppCommsListener.letUsBegin(getParameters().getRaw());
-        steno.info("Startup status was: " + startupStatus.name());
+        AutoMakerInterAppRequest interAppCommsRequest = new AutoMakerInterAppRequest();
+        interAppCommsRequest.setCommand(AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW);
+        interAppCommsRequest.setParameters(getParameters().getUnnamed());
+        InterAppStartupStatus startupStatus = interAppCommsListener.letUsBegin(interAppCommsRequest, this);
+
+        if (startupStatus == InterAppStartupStatus.STARTED_OK && getParameters().getUnnamed().size() > 0)
+        {
+            modelsToLoadAtStartup = getParameters().getUnnamed();
+        }
+        
+        steno.debug("Startup status was: " + startupStatus.name());
     }
 
     @Override
@@ -126,7 +133,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     checkMachineTypeRecognised(i18nBundle);
 
                     String applicationName = i18nBundle.getString("application.title");
-                    displayManager.configureDisplayManager(mainStage, applicationName);
+                    displayManager.configureDisplayManager(mainStage, applicationName, modelsToLoadAtStartup);
 
                     mainStage.setOnCloseRequest((WindowEvent event) ->
                     {
@@ -253,7 +260,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     public void stop() throws Exception
     {
         interAppCommsListener.shutdown();
-        
+
         if (localWebInterface != null)
         {
             localWebInterface.stop();
@@ -456,5 +463,22 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.initModality(Modality.WINDOW_MODAL);
 
         mainStage.show();
+    }
+
+    @Override
+    public void incomingComms(InterAppRequest interAppRequest)
+    {
+        steno.info("Received an InterApp comms request: " + interAppRequest.toString());
+
+        if (interAppRequest instanceof AutoMakerInterAppRequest)
+        {
+            AutoMakerInterAppRequest amRequest = (AutoMakerInterAppRequest) interAppRequest;
+            switch (amRequest.getCommand())
+            {
+                case LOAD_MESH_INTO_LAYOUT_VIEW:
+                    displayManager.loadModelsIntoNewProject(amRequest.getParameters());
+                    break;
+            }
+        }
     }
 }

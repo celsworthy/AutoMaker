@@ -1,20 +1,28 @@
 package celtech.automaker;
 
 import celtech.Lookup;
-import celtech.appManager.ApplicationMode;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
-import celtech.printerControl.comms.RoboxCommsManager;
-import celtech.printerControl.model.Printer;
-import celtech.printerControl.model.PrinterException;
+import celtech.roboxbase.BaseLookup;
+import celtech.roboxbase.comms.RoboxCommsManager;
+import celtech.roboxbase.configuration.BaseConfiguration;
+import celtech.roboxbase.interappcomms.InterAppCommsListener;
+import celtech.roboxbase.interappcomms.InterAppStartupStatus;
+import celtech.roboxbase.printerControl.model.Printer;
+import celtech.roboxbase.printerControl.model.PrinterException;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import celtech.utils.application.ApplicationUtils;
-import celtech.utils.tasks.TaskResponse;
+import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.BindException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,7 +42,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -75,11 +82,19 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private double splashWidth;
     private double splashHeight;
     private LocalWebInterface localWebInterface = null;
+    private final InterAppCommsListener interAppCommsListener = new InterAppCommsListener();
+
+    @Override
+    public void init() throws Exception
+    {
+        InterAppStartupStatus startupStatus = interAppCommsListener.letUsBegin(getParameters().getRaw());
+        steno.info("Startup status was: " + startupStatus.name());
+    }
 
     @Override
     public void start(Stage stage) throws Exception
     {
-        String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+        String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         Lookup.setupDefaultValues();
 
         ApplicationUtils.outputApplicationStartupBanner(this.getClass());
@@ -95,7 +110,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     attachIcons(mainStage);
 
                     commsManager = RoboxCommsManager.
-                            getInstance(ApplicationConfiguration.getBinariesDirectory());
+                            getInstance(BaseConfiguration.getBinariesDirectory());
 
                     try
                     {
@@ -106,7 +121,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     }
 
                     displayManager = DisplayManager.getInstance();
-                    i18nBundle = Lookup.getLanguageBundle();
+                    i18nBundle = BaseLookup.getLanguageBundle();
 
                     checkMachineTypeRecognised(i18nBundle);
 
@@ -118,7 +133,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                         boolean transferringDataToPrinter = false;
                         boolean willShutDown = true;
 
-                        for (Printer printer : Lookup.getConnectedPrinters())
+                        for (Printer printer : BaseLookup.getConnectedPrinters())
                         {
                             transferringDataToPrinter = transferringDataToPrinter
                                     | printer.getPrintEngine().transferGCodeToPrinterService.isRunning();
@@ -126,12 +141,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                         if (transferringDataToPrinter)
                         {
-                            boolean shutDownAnyway = Lookup.getSystemNotificationHandler().
+                            boolean shutDownAnyway = BaseLookup.getSystemNotificationHandler().
                                     showJobsTransferringShutdownDialog();
 
                             if (shutDownAnyway)
                             {
-                                for (Printer printer : Lookup.getConnectedPrinters())
+                                for (Printer printer : BaseLookup.getConnectedPrinters())
                                 {
                                     waitingForCancelFrom.add(printer);
 
@@ -237,6 +252,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void stop() throws Exception
     {
+        interAppCommsListener.shutdown();
+        
         if (localWebInterface != null)
         {
             localWebInterface.stop();
@@ -260,7 +277,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         }
 
         Thread.sleep(5000);
-        Lookup.setShuttingDown(true);
+        BaseLookup.setShuttingDown(true);
     }
 
 //    private void setAppUserIDForWindows()
@@ -356,7 +373,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
         AnchorPane.setLeftAnchor(copyrightLabel, 50.0);
 
-        String versionString = ApplicationConfiguration.getApplicationVersion();;
+        String versionString = BaseConfiguration.getApplicationVersion();;
         Text versionLabel = new Text("Version " + versionString);
         versionLabel.getStyleClass().add("splashVersion");
         AnchorPane.setBottomAnchor(versionLabel, 45.0);
@@ -402,7 +419,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             {
             }
 
-            Lookup.getTaskExecutor().runOnGUIThread(() ->
+            BaseLookup.getTaskExecutor().runOnGUIThread(() ->
             {
                 mainStagePreparer.run();
             });
@@ -417,9 +434,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         mainStage.setOnShown((WindowEvent event) ->
         {
-            autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(),
+            autoUpdater = new AutoUpdate(BaseConfiguration.getApplicationShortName(),
                     ApplicationConfiguration.getDownloadModifier(
-                            ApplicationConfiguration.getApplicationName()),
+                            BaseConfiguration.getApplicationName()),
                     completeListener);
             autoUpdater.start();
 
@@ -435,7 +452,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.setY(primaryScreenBounds.getMinY());
         mainStage.setWidth(primaryScreenBounds.getWidth());
         mainStage.setHeight(primaryScreenBounds.getHeight());
-        
+
         mainStage.initModality(Modality.WINDOW_MODAL);
 
         mainStage.show();

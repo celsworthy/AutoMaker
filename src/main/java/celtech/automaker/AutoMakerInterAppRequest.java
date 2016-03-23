@@ -1,7 +1,11 @@
 package celtech.automaker;
 
 import celtech.roboxbase.comms.interapp.InterAppRequest;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.ArrayList;
 import java.util.List;
+import libertysystems.stenographer.Stenographer;
+import libertysystems.stenographer.StenographerFactory;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
@@ -12,8 +16,11 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public class AutoMakerInterAppRequest extends InterAppRequest
 {
 
+    @JsonIgnore
+    private final Stenographer steno = StenographerFactory.getStenographer(AutoMakerInterAppRequest.class.getName());
+
     private AutoMakerInterAppRequestCommands command;
-    private List<String> parameters;
+    private List<InterAppParameter> urlEncodedParameters = new ArrayList<>();
 
     public AutoMakerInterAppRequest()
     {
@@ -29,14 +36,41 @@ public class AutoMakerInterAppRequest extends InterAppRequest
         this.command = command;
     }
 
-    public List<String> getParameters()
+    public List<InterAppParameter> getUrlEncodedParameters()
     {
-        return parameters;
+        return urlEncodedParameters;
     }
 
-    public void setParameters(List<String> parameters)
+    public void setUrlEncodedParameters(List<InterAppParameter> urlEncodedParameters)
     {
-        this.parameters = parameters;
+        this.urlEncodedParameters = urlEncodedParameters;
+    }
+
+    @JsonIgnore
+    public List<InterAppParameter> getUnencodedParameters()
+    {
+        List<InterAppParameter> paramsOut = new ArrayList<>();
+
+        for (InterAppParameter paramEntry : urlEncodedParameters)
+        {
+            paramsOut.add(new InterAppParameter(paramEntry.getType(), paramEntry.getUnencodedParameter()));
+        }
+
+        return paramsOut;
+    }
+
+    public void addURLEncodedParameter(InterAppParameterType parameterType, String urlEncodedParameter)
+    {
+        urlEncodedParameters.add(new InterAppParameter(parameterType, urlEncodedParameter));
+    }
+
+    public void addSeparatedURLEncodedParameter(InterAppParameterType parameterType, String urlEncodedParametersWithSeparator)
+    {
+        String[] params = urlEncodedParametersWithSeparator.split("&");
+        for (String param : params)
+        {
+            urlEncodedParameters.add(new InterAppParameter(parameterType, param));
+        }
     }
 
     @Override
@@ -44,7 +78,7 @@ public class AutoMakerInterAppRequest extends InterAppRequest
     {
         return new HashCodeBuilder(13, 37).
                 append(command).
-                append(parameters).
+                append(urlEncodedParameters).
                 toHashCode();
     }
 
@@ -64,7 +98,7 @@ public class AutoMakerInterAppRequest extends InterAppRequest
         return new EqualsBuilder().
                 // if deriving: appendSuper(super.equals(obj)).
                 append(command, rhs.command).
-                append(parameters, rhs.parameters).
+                append(urlEncodedParameters, rhs.urlEncodedParameters).
                 isEquals();
     }
 }

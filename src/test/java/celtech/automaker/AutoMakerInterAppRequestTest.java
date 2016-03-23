@@ -2,8 +2,6 @@ package celtech.automaker;
 
 import celtech.roboxbase.comms.interapp.InterAppRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -19,7 +17,7 @@ public class AutoMakerInterAppRequestTest
 {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final String jsonifiedClass = "{\"@class\":\"celtech.automaker.AutoMakerInterAppRequest\",\"command\":\"LOAD_MESH_INTO_LAYOUT_VIEW\",\"parameters\":[\"TestParams\"]}";
+    private static final String jsonifiedClass = "{\"@class\":\"celtech.automaker.AutoMakerInterAppRequest\",\"command\":\"LOAD_MESH_INTO_LAYOUT_VIEW\",\"urlEncodedParameters\":[{\"type\":\"PROJECT_NAME\",\"urlEncodedParameter\":\"A project\"},{\"type\":\"MODEL_NAME\",\"urlEncodedParameter\":\"A model with spaces\"},{\"type\":\"MODEL_NAME\",\"urlEncodedParameter\":\"Another model with spaces\"}]}";
 
     public AutoMakerInterAppRequestTest()
     {
@@ -75,10 +73,22 @@ public class AutoMakerInterAppRequestTest
         AutoMakerInterAppRequest packet = new AutoMakerInterAppRequest();
 
         packet.setCommand(AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW);
-        List<String> paramList = new ArrayList<>();
-        paramList.add("TestParams");
-        packet.setParameters(paramList);
+        packet.addSeparatedURLEncodedParameter(InterAppParameterType.PROJECT_NAME, "A project");
+        packet.addSeparatedURLEncodedParameter(InterAppParameterType.MODEL_NAME, "A model with spaces");
+        packet.addSeparatedURLEncodedParameter(InterAppParameterType.MODEL_NAME, "Another model with spaces");
 
         return packet;
+    }
+
+    @Test
+    public void paramsInOut()
+    {
+        AutoMakerInterAppRequest packet = new AutoMakerInterAppRequest();
+        packet.addSeparatedURLEncodedParameter(InterAppParameterType.MODEL_NAME, "fred&jim");
+        assertEquals(2, packet.getUnencodedParameters().size());
+        assertEquals(InterAppParameterType.MODEL_NAME, packet.getUnencodedParameters().get(0).getType());
+        assertEquals("fred", packet.getUnencodedParameters().get(0).getUnencodedParameter());
+        assertEquals(InterAppParameterType.MODEL_NAME, packet.getUnencodedParameters().get(1).getType());
+        assertEquals("jim", packet.getUnencodedParameters().get(1).getUnencodedParameter());
     }
 }

@@ -80,21 +80,96 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private double splashHeight;
     private LocalWebInterface localWebInterface = null;
     private final InterAppCommsThread interAppCommsListener = new InterAppCommsThread();
-    private List<String> modelsToLoadAtStartup = new ArrayList<>();
+    private final List<String> modelsToLoadAtStartup = new ArrayList<>();
+    private String modelsToLoadAtStartup_projectName = "Import";
+    private boolean modelsToLoadAtStartup_dontgroup = false;
+
+    private final String uriScheme = "automaker:";
+    private final String paramDivider = "\\?";
 
     @Override
     public void init() throws Exception
     {
+        AutoMakerInterAppRequestCommands interAppCommand = AutoMakerInterAppRequestCommands.NONE;
+        List<InterAppParameter> interAppParameters = new ArrayList<>();
+
+        if (getParameters().getUnnamed().size() == 1)
+        {
+            String potentialParam = getParameters().getUnnamed().get(0);
+            if (potentialParam.startsWith(uriScheme))
+            {
+                //We've been started through a URI scheme
+                potentialParam = potentialParam.replaceAll(uriScheme, "");
+
+                String[] paramParts = potentialParam.split(paramDivider);
+                if (paramParts.length == 2)
+                {
+//                    steno.info("Viable param:" + potentialParam + "->" + paramParts[0] + " -------- " + paramParts[1]);
+                    // Got a viable param
+                    switch (paramParts[0])
+                    {
+                        case "loadModel":
+                            String[] subParams = paramParts[1].split("&");
+
+                            for (String subParam : subParams)
+                            {
+                                InterAppParameter parameter = InterAppParameter.fromParts(subParam);
+                                if (parameter != null)
+                                {
+                                    interAppParameters.add(parameter);
+                                }
+                            }
+                            if (interAppParameters.size() > 0)
+                            {
+                                interAppCommand = AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
         AutoMakerInterAppRequest interAppCommsRequest = new AutoMakerInterAppRequest();
-        interAppCommsRequest.setCommand(AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW);
-        interAppCommsRequest.setParameters(getParameters().getUnnamed());
+        interAppCommsRequest.setCommand(interAppCommand);
+        interAppCommsRequest.setUrlEncodedParameters(interAppParameters);
+
         InterAppStartupStatus startupStatus = interAppCommsListener.letUsBegin(interAppCommsRequest, this);
 
-        if (startupStatus == InterAppStartupStatus.STARTED_OK && getParameters().getUnnamed().size() > 0)
+        if (startupStatus == InterAppStartupStatus.STARTED_OK)
         {
-            modelsToLoadAtStartup = getParameters().getUnnamed();
+            switch (interAppCommand)
+            {
+                case LOAD_MESH_INTO_LAYOUT_VIEW:
+
+                    interAppCommsRequest.getUnencodedParameters()
+                            .forEach(param ->
+                                    {
+                                        if (param.getType() == InterAppParameterType.MODEL_NAME)
+                                        {
+                                            modelsToLoadAtStartup.add(param.getUnencodedParameter());
+                                        } else if (param.getType() == InterAppParameterType.PROJECT_NAME)
+                                        {
+                                            modelsToLoadAtStartup_projectName = param.getUnencodedParameter();
+                                        } else if (param.getType() == InterAppParameterType.DONT_GROUP_MODELS)
+                                        {
+                                            switch (param.getUnencodedParameter())
+                                            {
+                                                case "true":
+                                                    modelsToLoadAtStartup_dontgroup = true;
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        }
+                            });
+                    break;
+                default:
+                    break;
+            }
         }
-        
+
         steno.debug("Startup status was: " + startupStatus.name());
     }
 
@@ -133,7 +208,10 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     checkMachineTypeRecognised(i18nBundle);
 
                     String applicationName = i18nBundle.getString("application.title");
-                    displayManager.configureDisplayManager(mainStage, applicationName, modelsToLoadAtStartup);
+                    displayManager.configureDisplayManager(mainStage, applicationName,
+                            modelsToLoadAtStartup_projectName,
+                            modelsToLoadAtStartup,
+                            modelsToLoadAtStartup_dontgroup);
 
                     mainStage.setOnCloseRequest((WindowEvent event) ->
                     {
@@ -476,7 +554,31 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             switch (amRequest.getCommand())
             {
                 case LOAD_MESH_INTO_LAYOUT_VIEW:
-                    displayManager.loadModelsIntoNewProject(amRequest.getParameters());
+                    String projectName = "Import";
+                    List<String> modelsToLoad = new ArrayList<>();
+                    boolean dontGroupModels = false;
+
+                    for (InterAppParameter interAppParam : amRequest.getUnencodedParameters())
+                    {
+                        if (interAppParam.getType() == InterAppParameterType.MODEL_NAME)
+                        {
+                            modelsToLoad.add(interAppParam.getUnencodedParameter());
+                        } else if (interAppParam.getType() == InterAppParameterType.PROJECT_NAME)
+                        {
+                            projectName = interAppParam.getUnencodedParameter();
+                        } else if (interAppParam.getType() == InterAppParameterType.DONT_GROUP_MODELS)
+                        {
+                            switch (interAppParam.getUnencodedParameter())
+                            {
+                                case "true":
+                                    dontGroupModels = true;
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                    displayManager.loadModelsIntoNewProject(projectName, modelsToLoad, dontGroupModels);
                     break;
             }
         }

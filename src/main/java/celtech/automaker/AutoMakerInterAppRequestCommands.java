@@ -6,5 +6,7 @@ package celtech.automaker;
  */
 public enum AutoMakerInterAppRequestCommands
 {
-    LOAD_MESH_INTO_LAYOUT_VIEW
+    NONE,
+    LOAD_MESH_INTO_LAYOUT_VIEW,
+    PRINT_GCODE_FILE
 }

@@ -176,7 +176,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void start(Stage stage) throws Exception
     {
-        String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+        BaseConfiguration.initialise(AutoMaker.class);
         Lookup.setupDefaultValues();
 
         ApplicationUtils.outputApplicationStartupBanner(this.getClass());
@@ -336,7 +336,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
     @Override
     public void stop() throws Exception
-    {
+    {        
         interAppCommsListener.shutdown();
 
         if (localWebInterface != null)
@@ -354,6 +354,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         commsManager.shutdown();
         autoUpdater.shutdown();
         displayManager.shutdown();
+        BaseConfiguration.shutdown();
         ApplicationConfiguration.writeApplicationMemory();
 
         if (steno.getCurrentLogLevel().isLoggable(LogLevel.DEBUG))

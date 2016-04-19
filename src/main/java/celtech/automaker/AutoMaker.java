@@ -20,6 +20,10 @@ import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -68,6 +72,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     {
         steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
     }
+
     private static DisplayManager displayManager = null;
     private ResourceBundle i18nBundle = null;
     private static Configuration configuration = null;
@@ -79,67 +84,32 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private double splashWidth;
     private double splashHeight;
     private LocalWebInterface localWebInterface = null;
-    private final InterAppCommsThread interAppCommsListener = new InterAppCommsThread();
+    private static final InterAppCommsThread interAppCommsListener = new InterAppCommsThread();
     private final List<String> modelsToLoadAtStartup = new ArrayList<>();
     private String modelsToLoadAtStartup_projectName = "Import";
     private boolean modelsToLoadAtStartup_dontgroup = false;
 
-    private final String uriScheme = "automaker:";
-    private final String paramDivider = "\\?";
+    private static final String uriScheme = "automaker://";
+    private static final String paramDivider = "\\?";
 
     @Override
     public void init() throws Exception
     {
-        AutoMakerInterAppRequestCommands interAppCommand = AutoMakerInterAppRequestCommands.NONE;
-        List<InterAppParameter> interAppParameters = new ArrayList<>();
+        String inputParams = null;
+        AutoMakerInterAppRequest interAppCommsRequest = null;
 
         if (getParameters().getUnnamed().size() == 1)
         {
-            String potentialParam = getParameters().getUnnamed().get(0);
-            if (potentialParam.startsWith(uriScheme))
-            {
-                //We've been started through a URI scheme
-                potentialParam = potentialParam.replaceAll(uriScheme, "");
-
-                String[] paramParts = potentialParam.split(paramDivider);
-                if (paramParts.length == 2)
-                {
-//                    steno.info("Viable param:" + potentialParam + "->" + paramParts[0] + " -------- " + paramParts[1]);
-                    // Got a viable param
-                    switch (paramParts[0])
-                    {
-                        case "loadModel":
-                            String[] subParams = paramParts[1].split("&");
-
-                            for (String subParam : subParams)
-                            {
-                                InterAppParameter parameter = InterAppParameter.fromParts(subParam);
-                                if (parameter != null)
-                                {
-                                    interAppParameters.add(parameter);
-                                }
-                            }
-                            if (interAppParameters.size() > 0)
-                            {
-                                interAppCommand = AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW;
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
+            inputParams = getParameters().getUnnamed().get(0);
         }
 
-        AutoMakerInterAppRequest interAppCommsRequest = new AutoMakerInterAppRequest();
-        interAppCommsRequest.setCommand(interAppCommand);
-        interAppCommsRequest.setUrlEncodedParameters(interAppParameters);
+        interAppCommsRequest = createInterAppRequest(inputParams);
 
         InterAppStartupStatus startupStatus = interAppCommsListener.letUsBegin(interAppCommsRequest, this);
 
         if (startupStatus == InterAppStartupStatus.STARTED_OK)
         {
-            switch (interAppCommand)
+            switch (interAppCommsRequest.getCommand())
             {
                 case LOAD_MESH_INTO_LAYOUT_VIEW:
 
@@ -173,13 +143,64 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         steno.debug("Startup status was: " + startupStatus.name());
     }
 
+    private static AutoMakerInterAppRequest createInterAppRequest(String parameterString)
+    {
+        AutoMakerInterAppRequest returnValue = null;
+
+        AutoMakerInterAppRequestCommands interAppCommand = AutoMakerInterAppRequestCommands.NONE;
+        List<InterAppParameter> interAppParameters = new ArrayList<>();
+
+        steno.info("Parameter string was: " + parameterString);
+        if (parameterString != null
+                && parameterString.startsWith(uriScheme))
+        {
+            //We've been started through a URI scheme
+            parameterString = parameterString.replaceAll(uriScheme, "");
+
+            String[] paramParts = parameterString.split(paramDivider);
+            if (paramParts.length == 2)
+            {
+//                    steno.info("Viable param:" + potentialParam + "->" + paramParts[0] + " -------- " + paramParts[1]);
+                // Got a viable param
+                switch (paramParts[0])
+                {
+                    case "loadModel":
+                        String[] subParams = paramParts[1].split("&");
+
+                        for (String subParam : subParams)
+                        {
+                            InterAppParameter parameter = InterAppParameter.fromParts(subParam);
+                            if (parameter != null)
+                            {
+                                interAppParameters.add(parameter);
+                            }
+                        }
+                        if (interAppParameters.size() > 0)
+                        {
+                            interAppCommand = AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        returnValue = new AutoMakerInterAppRequest();
+        returnValue.setCommand(interAppCommand);
+        returnValue.setUrlEncodedParameters(interAppParameters);
+
+        return returnValue;
+    }
+
     @Override
     public void start(Stage stage) throws Exception
     {
-        String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+        BaseConfiguration.initialise(AutoMaker.class);
         Lookup.setupDefaultValues();
 
-        ApplicationUtils.outputApplicationStartupBanner(this.getClass());
+        ApplicationUtils.outputApplicationStartupBanner(
+                this.getClass());
         mainStage = new Stage();
 
         final Task<Boolean> mainStagePreparer = new Task<Boolean>()
@@ -329,8 +350,68 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
      *
      * @param args the command line arguments
      */
-    public static void main(String[] args)
+    public static
+            void main(String[] args)
     {
+        try
+        {
+            Class cEAWTApplication = Class.forName("com.apple.eawt.Application");
+            Class cEAWTAppEventListener = Class.forName("com.apple.eawt.AppEventListener");
+            Class cEAWTSystemSleepListener = Class.forName("com.apple.eawt.SystemSleepListener");
+
+            Method[] appMethods = cEAWTApplication.getDeclaredMethods();
+            for (Method meth : appMethods)
+            {
+                steno.info("Method:" + meth.toGenericString());
+            }
+            Method mGetApplication = cEAWTApplication.getDeclaredMethod("getApplication");
+
+            Class[] mAddAppEventListenerArgs = new Class[1];
+            mAddAppEventListenerArgs[0] = cEAWTAppEventListener;
+
+            Method mAddAppEventListener = cEAWTApplication.getMethod("addAppEventListener", mAddAppEventListenerArgs);
+
+            Object reopenListener = Proxy.newProxyInstance(cEAWTSystemSleepListener.getClassLoader(), new Class<?>[]
+            {
+                cEAWTSystemSleepListener
+            }, new InvocationHandler()
+            {
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
+                {
+                    //Handle the invocations
+                    if (method.getName().equals("systemAboutToSleep"))
+                    {
+                        steno.info("Called with systemAboutToSleep");
+                        for (Object arg : args)
+                        {
+                            steno.info("Arg: " + arg.getClass().toGenericString());
+                        }
+                        return 1;
+                    } else if (method.getName().equals("systemAwoke"))
+                    {
+                        steno.info("Called with systemAwoke");
+                        for (Object arg : args)
+                        {
+                            steno.info("Arg: " + arg.getClass().toGenericString());
+                        }
+                        return 1;
+                    } else
+                    {
+                        steno.info("Called with " + method.getName());
+                        return 1;
+                    }
+                }
+            });
+
+            Object application = mGetApplication.invoke(null, null);
+            mAddAppEventListener.invoke(application, reopenListener);
+
+            steno.info("Registered for Mac-specific events:" + application.getClass().toGenericString());
+        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException ex)
+        {
+            steno.exception("Unable to register for Mac-specific events", ex);
+        }
         launch(args);
     }
 
@@ -543,11 +624,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.show();
     }
 
-    @Override
-    public void incomingComms(InterAppRequest interAppRequest)
+    private static void processIncomingComms(InterAppRequest interAppRequest)
     {
-        steno.info("Received an InterApp comms request: " + interAppRequest.toString());
-
         if (interAppRequest instanceof AutoMakerInterAppRequest)
         {
             AutoMakerInterAppRequest amRequest = (AutoMakerInterAppRequest) interAppRequest;
@@ -582,5 +660,11 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     break;
             }
         }
+    }
+
+    @Override
+    public void incomingComms(InterAppRequest interAppRequest)
+    {
+        processIncomingComms(interAppRequest);
     }
 }

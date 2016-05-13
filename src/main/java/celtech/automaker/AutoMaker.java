@@ -13,8 +13,6 @@ import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import celtech.utils.application.ApplicationUtils;
 import celtech.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
-import java.io.IOException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,14 +24,13 @@ import static javafx.application.Application.launch;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
-import javafx.fxml.FXMLLoader;
+import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
@@ -106,10 +103,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     displayManager = DisplayManager.getInstance();
                     i18nBundle = Lookup.getLanguageBundle();
 
-                    checkMachineTypeRecognised(i18nBundle);
-
                     String applicationName = i18nBundle.getString("application.title");
-                    displayManager.configureDisplayManager(mainStage, applicationName);
+
+                    Lookup.getTaskExecutor().runOnGUIThread(() ->
+                    {
+                        displayManager.configureDisplayManager(mainStage, applicationName);
+                    });
 
                     mainStage.setOnCloseRequest((WindowEvent event) ->
                     {
@@ -163,34 +162,19 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                             steno.info("Shutdown aborted - transfers to printer were in progress");
                         }
                     });
-
-                    VBox statusSupplementaryPage = null;
-
-                    try
-                    {
-                        URL mainPageURL = getClass().getResource(
-                                "/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
-                        FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(
-                                mainPageURL,
-                                i18nBundle);
-                        statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.
-                                load();
-                    } catch (IOException ex)
-                    {
-                        steno.error("Failed to load supplementary status page:" + ex.getMessage());
-                        System.err.println(ex);
-                    }
                 } catch (Throwable ex)
                 {
                     ex.printStackTrace();
                     Platform.exit();
                 }
-                return false;
+                return true;
             }
-
         };
 
-        showSplash(stage, mainStagePreparer);
+        if (checkMachineTypeRecognised(Lookup.getLanguageBundle()))
+        {
+            showSplash(stage, mainStagePreparer);
+        }
     }
 
     private void attachIcons(Stage stage)
@@ -247,9 +231,18 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             timeoutStrikes--;
         }
 
-        commsManager.shutdown();
-        autoUpdater.shutdown();
-        displayManager.shutdown();
+        if (commsManager != null)
+        {
+            commsManager.shutdown();
+        }
+        if (autoUpdater != null)
+        {
+            autoUpdater.shutdown();
+        }
+        if (displayManager != null)
+        {
+            displayManager.shutdown();
+        }
         ApplicationConfiguration.writeApplicationMemory();
 
         if (steno.getCurrentLogLevel().isLoggable(LogLevel.DEBUG))
@@ -377,41 +370,50 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             if (newState == Worker.State.SUCCEEDED)
             {
-                steno.debug("show main stage");
-                showMainStage();
-                steno.debug("end show main stage");
-                FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
-                fadeSplash.setFromValue(1.0);
-                fadeSplash.setToValue(0.0);
-                fadeSplash.setOnFinished(actionEvent ->
+                if (mainStagePreparer.getValue())
                 {
-                    splashStage.hide();
-                    splashStage.setAlwaysOnTop(false);
-                });
-                fadeSplash.play();
+                    steno.debug("show main stage");
+                    showMainStage();
+                    steno.debug("end show main stage");
+                } else
+                {
+                    steno.warning("Told not to start up");
+                }
             }
         });
 
+        splashStage.setOnShown(new EventHandler<WindowEvent>()
+        {
+
+            @Override
+            public void handle(WindowEvent t)
+            {
+                steno.debug("Splash shown");
+                Lookup.getTaskExecutor().runOnBackgroundThread(() ->
+                {
+                    Lookup.getTaskExecutor().runOnBackgroundThread(mainStagePreparer);
+                    try
+                    {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException ex)
+                    {
+                    }
+
+                    FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
+                    fadeSplash.setFromValue(1.0);
+                    fadeSplash.setToValue(0.0);
+                    fadeSplash.setOnFinished(actionEvent ->
+                    {
+                        splashStage.hide();
+                        splashStage.setAlwaysOnTop(false);
+                    });
+                    fadeSplash.play();
+
+                });
+            }
+        });
         steno.debug("show splash");
         splashStage.show();
-
-        Thread aThread = new Thread(() ->
-        {
-            try
-            {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex)
-            {
-            }
-
-            Lookup.getTaskExecutor().runOnGUIThread(() ->
-            {
-                mainStagePreparer.run();
-            });
-        });
-
-        steno.debug("show splash - start main stage preparer");
-        aThread.start();
     }
 
     private void showMainStage()
@@ -438,7 +440,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.setY(primaryScreenBounds.getMinY());
         mainStage.setWidth(primaryScreenBounds.getWidth());
         mainStage.setHeight(primaryScreenBounds.getHeight());
-        
+
         mainStage.initModality(Modality.WINDOW_MODAL);
 
         mainStage.show();

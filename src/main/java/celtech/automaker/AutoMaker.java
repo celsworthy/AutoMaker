@@ -1,6 +1,10 @@
 package celtech.automaker;
 
 import celtech.Lookup;
+import celtech.comms.interapp.InterAppCommsConsumer;
+import celtech.comms.interapp.InterAppCommsThread;
+import celtech.comms.interapp.InterAppRequest;
+import celtech.comms.interapp.InterAppStartupStatus;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
 import celtech.printerControl.comms.RoboxCommsManager;
@@ -19,6 +23,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.application.Platform;
@@ -50,7 +56,7 @@ import sun.misc.ThreadGroupUtils;
  *
  * @author Ian Hudson @ Liberty Systems Limited
  */
-public class AutoMaker extends Application implements AutoUpdateCompletionListener
+public class AutoMaker extends Application implements AutoUpdateCompletionListener, InterAppCommsConsumer
 {
 
     private static final Stenographer steno;
@@ -70,6 +76,99 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private double splashWidth;
     private double splashHeight;
     private LocalWebInterface localWebInterface = null;
+    private final InterAppCommsThread interAppCommsListener = new InterAppCommsThread();
+    private final List<String> modelsToLoadAtStartup = new ArrayList<>();
+    private String modelsToLoadAtStartup_projectName = "Import";
+    private boolean modelsToLoadAtStartup_dontgroup = false;
+
+    private final String uriScheme = "automaker:";
+    private final String paramDivider = "\\?";
+
+    @Override
+    public void init() throws Exception
+    {
+        AutoMakerInterAppRequestCommands interAppCommand = AutoMakerInterAppRequestCommands.NONE;
+        List<InterAppParameter> interAppParameters = new ArrayList<>();
+
+        if (getParameters().getUnnamed().size() == 1)
+        {
+            String potentialParam = getParameters().getUnnamed().get(0);
+            if (potentialParam.startsWith(uriScheme))
+            {
+                //We've been started through a URI scheme
+                potentialParam = potentialParam.replaceAll(uriScheme, "");
+
+                String[] paramParts = potentialParam.split(paramDivider);
+                if (paramParts.length == 2)
+                {
+//                    steno.info("Viable param:" + potentialParam + "->" + paramParts[0] + " -------- " + paramParts[1]);
+                    // Got a viable param
+                    switch (paramParts[0])
+                    {
+                        case "loadModel":
+                            String[] subParams = paramParts[1].split("&");
+
+                            for (String subParam : subParams)
+                            {
+                                InterAppParameter parameter = InterAppParameter.fromParts(subParam);
+                                if (parameter != null)
+                                {
+                                    interAppParameters.add(parameter);
+                                }
+                            }
+                            if (interAppParameters.size() > 0)
+                            {
+                                interAppCommand = AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        AutoMakerInterAppRequest interAppCommsRequest = new AutoMakerInterAppRequest();
+        interAppCommsRequest.setCommand(interAppCommand);
+        interAppCommsRequest.setUrlEncodedParameters(interAppParameters);
+
+        InterAppStartupStatus startupStatus = interAppCommsListener.letUsBegin(interAppCommsRequest, this);
+
+        if (startupStatus == InterAppStartupStatus.STARTED_OK)
+        {
+            switch (interAppCommand)
+            {
+                case LOAD_MESH_INTO_LAYOUT_VIEW:
+
+                    interAppCommsRequest.getUnencodedParameters()
+                            .forEach(param ->
+                                    {
+                                        if (param.getType() == InterAppParameterType.MODEL_NAME)
+                                        {
+                                            modelsToLoadAtStartup.add(param.getUnencodedParameter());
+                                        } else if (param.getType() == InterAppParameterType.PROJECT_NAME)
+                                        {
+                                            modelsToLoadAtStartup_projectName = param.getUnencodedParameter();
+                                        } else if (param.getType() == InterAppParameterType.DONT_GROUP_MODELS)
+                                        {
+                                            switch (param.getUnencodedParameter())
+                                            {
+                                                case "true":
+                                                    modelsToLoadAtStartup_dontgroup = true;
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        }
+                            });
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        steno.debug("Startup status was: " + startupStatus.name());
+    }
 
     @Override
     public void start(Stage stage) throws Exception
@@ -193,13 +292,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         if (requiresShutdown)
         {
             Platform.exit();
-        } else
-        {
-            if (check3DSupported(i18nBundle))
-            {
-                WelcomeToApplicationManager.displayWelcomeIfRequired();
-                commsManager.start();
-            }
         }
     }
 
@@ -219,6 +311,8 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     @Override
     public void stop() throws Exception
     {
+        interAppCommsListener.shutdown();
+
         if (localWebInterface != null)
         {
             localWebInterface.stop();
@@ -342,7 +436,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         SimpleDateFormat yearFormatter = new SimpleDateFormat("YYYY");
         String yearString = yearFormatter.format(new Date());
-        Text copyrightLabel = new Text("© " + yearString
+        Text copyrightLabel = new Text("Â© " + yearString
                 + " CEL Technology Ltd. All Rights Reserved.");
         copyrightLabel.getStyleClass().add("splashCopyright");
         AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
@@ -389,27 +483,19 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             public void handle(WindowEvent t)
             {
                 steno.debug("Splash shown");
-                Lookup.getTaskExecutor().runOnBackgroundThread(() ->
+                PauseTransition pauseForABit = new PauseTransition(Duration.millis(2000));
+                FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
+                fadeSplash.setFromValue(1.0);
+                fadeSplash.setToValue(0.0);
+                fadeSplash.setOnFinished(actionEvent ->
                 {
-                    Lookup.getTaskExecutor().runOnBackgroundThread(mainStagePreparer);
-                    try
-                    {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException ex)
-                    {
-                    }
-
-                    FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
-                    fadeSplash.setFromValue(1.0);
-                    fadeSplash.setToValue(0.0);
-                    fadeSplash.setOnFinished(actionEvent ->
-                    {
-                        splashStage.hide();
-                        splashStage.setAlwaysOnTop(false);
-                    });
-                    fadeSplash.play();
-
+                    splashStage.hide();
+                    splashStage.setAlwaysOnTop(false);
                 });
+                
+                SequentialTransition splashSequence = new SequentialTransition(pauseForABit, fadeSplash);
+                splashSequence.play();
+                Lookup.getTaskExecutor().runOnBackgroundThread(mainStagePreparer);
             }
         });
         steno.debug("show splash");
@@ -428,6 +514,14 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     completeListener);
             autoUpdater.start();
 
+            if (check3DSupported(i18nBundle))
+            {
+                steno.debug("3D support OK");
+                WelcomeToApplicationManager.displayWelcomeIfRequired();
+                steno.debug("Starting comms manager");
+                commsManager.start();
+            }
+
 //            localWebInterface = new LocalWebInterface();
 //            localWebInterface.start();
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
@@ -444,5 +538,46 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.initModality(Modality.WINDOW_MODAL);
 
         mainStage.show();
+    }
+
+    @Override
+    public void incomingComms(InterAppRequest interAppRequest)
+    {
+        steno.info("Received an InterApp comms request: " + interAppRequest.toString());
+
+        if (interAppRequest instanceof AutoMakerInterAppRequest)
+        {
+            AutoMakerInterAppRequest amRequest = (AutoMakerInterAppRequest) interAppRequest;
+            switch (amRequest.getCommand())
+            {
+                case LOAD_MESH_INTO_LAYOUT_VIEW:
+                    String projectName = "Import";
+                    List<String> modelsToLoad = new ArrayList<>();
+                    boolean dontGroupModels = false;
+
+                    for (InterAppParameter interAppParam : amRequest.getUnencodedParameters())
+                    {
+                        if (interAppParam.getType() == InterAppParameterType.MODEL_NAME)
+                        {
+                            modelsToLoad.add(interAppParam.getUnencodedParameter());
+                        } else if (interAppParam.getType() == InterAppParameterType.PROJECT_NAME)
+                        {
+                            projectName = interAppParam.getUnencodedParameter();
+                        } else if (interAppParam.getType() == InterAppParameterType.DONT_GROUP_MODELS)
+                        {
+                            switch (interAppParam.getUnencodedParameter())
+                            {
+                                case "true":
+                                    dontGroupModels = true;
+                                    break;
+                                default:
+                                    break;
+}
+                        }
+                    }
+                    displayManager.loadModelsIntoNewProject(projectName, modelsToLoad, dontGroupModels);
+                    break;
+            }
+        }
     }
 }

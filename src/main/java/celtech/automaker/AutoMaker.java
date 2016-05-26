@@ -181,7 +181,10 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                 String applicationName = i18nBundle.getString("application.title");
 
-                displayManager.configureDisplayManager(mainStage, applicationName);
+                displayManager.configureDisplayManager(mainStage, applicationName,
+                        modelsToLoadAtStartup_projectName,
+                        modelsToLoadAtStartup,
+                        modelsToLoadAtStartup_dontgroup);
 
                 attachIcons(mainStage);
 

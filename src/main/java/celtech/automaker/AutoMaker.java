@@ -20,36 +20,17 @@ import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
 import com.sun.javafx.application.LauncherImpl;
-import java.io.IOException;
-import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
-import javafx.animation.FadeTransition;
 import javafx.application.Application;
-import static javafx.application.Application.launch;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
-import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
-import javafx.util.Duration;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.LogLevel;
@@ -202,7 +183,10 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                 String applicationName = i18nBundle.getString("application.title");
 
-                displayManager.configureDisplayManager(mainStage, applicationName, null, null, false);
+                displayManager.configureDisplayManager(mainStage, applicationName,
+                        modelsToLoadAtStartup_projectName,
+                        modelsToLoadAtStartup,
+                        modelsToLoadAtStartup_dontgroup);
 
                 attachIcons(mainStage);
 

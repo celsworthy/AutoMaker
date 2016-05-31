@@ -119,7 +119,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         if (startupStatus == InterAppStartupStatus.STARTED_OK)
         {
-            String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+            BaseConfiguration.initialise(AutoMaker.class);
             Lookup.setupDefaultValues();
 
             ApplicationUtils.outputApplicationStartupBanner(this.getClass());

@@ -19,39 +19,18 @@ import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
 import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
-import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.net.URL;
-import java.text.SimpleDateFormat;
+import com.sun.javafx.application.LauncherImpl;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
-import javafx.animation.FadeTransition;
 import javafx.application.Application;
-import static javafx.application.Application.launch;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
-import javafx.util.Duration;
 import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.LogLevel;
@@ -72,7 +51,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     {
         steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
     }
-
     private static DisplayManager displayManager = null;
     private ResourceBundle i18nBundle = null;
     private static Configuration configuration = null;
@@ -80,36 +58,84 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     private AutoUpdate autoUpdater = null;
     private List<Printer> waitingForCancelFrom = new ArrayList<>();
     private Stage mainStage;
-    private Pane splashLayout;
-    private double splashWidth;
-    private double splashHeight;
     private LocalWebInterface localWebInterface = null;
-    private static final InterAppCommsThread interAppCommsListener = new InterAppCommsThread();
+    private final InterAppCommsThread interAppCommsListener = new InterAppCommsThread();
     private final List<String> modelsToLoadAtStartup = new ArrayList<>();
     private String modelsToLoadAtStartup_projectName = "Import";
     private boolean modelsToLoadAtStartup_dontgroup = false;
 
-    private static final String uriScheme = "automaker://";
-    private static final String paramDivider = "\\?";
+    private final String uriScheme = "automaker:";
+    private final String paramDivider = "\\?";
 
     @Override
     public void init() throws Exception
     {
-        String inputParams = null;
-        AutoMakerInterAppRequest interAppCommsRequest = null;
+        AutoMakerInterAppRequestCommands interAppCommand = AutoMakerInterAppRequestCommands.NONE;
+        List<InterAppParameter> interAppParameters = new ArrayList<>();
 
         if (getParameters().getUnnamed().size() == 1)
         {
-            inputParams = getParameters().getUnnamed().get(0);
+            String potentialParam = getParameters().getUnnamed().get(0);
+            if (potentialParam.startsWith(uriScheme))
+            {
+                //We've been started through a URI scheme
+                potentialParam = potentialParam.replaceAll(uriScheme, "");
+
+                String[] paramParts = potentialParam.split(paramDivider);
+                if (paramParts.length == 2)
+                {
+//                    steno.info("Viable param:" + potentialParam + "->" + paramParts[0] + " -------- " + paramParts[1]);
+                    // Got a viable param
+                    switch (paramParts[0])
+                    {
+                        case "loadModel":
+                            String[] subParams = paramParts[1].split("&");
+
+                            for (String subParam : subParams)
+                            {
+                                InterAppParameter parameter = InterAppParameter.fromParts(subParam);
+                                if (parameter != null)
+                                {
+                                    interAppParameters.add(parameter);
+                                }
+                            }
+                            if (interAppParameters.size() > 0)
+                            {
+                                interAppCommand = AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
         }
 
-        interAppCommsRequest = createInterAppRequest(inputParams);
+        AutoMakerInterAppRequest interAppCommsRequest = new AutoMakerInterAppRequest();
+        interAppCommsRequest.setCommand(interAppCommand);
+        interAppCommsRequest.setUrlEncodedParameters(interAppParameters);
 
         InterAppStartupStatus startupStatus = interAppCommsListener.letUsBegin(interAppCommsRequest, this);
 
         if (startupStatus == InterAppStartupStatus.STARTED_OK)
         {
-            switch (interAppCommsRequest.getCommand())
+            BaseConfiguration.initialise(AutoMaker.class);
+            Lookup.setupDefaultValues();
+
+            ApplicationUtils.outputApplicationStartupBanner(this.getClass());
+
+            commsManager = RoboxCommsManager.
+                    getInstance(BaseConfiguration.getBinariesDirectory());
+
+            try
+            {
+                configuration = Configuration.getInstance();
+            } catch (ConfigNotLoadedException ex)
+            {
+                steno.error("Couldn't load application configuration");
+            }
+
+            switch (interAppCommand)
             {
                 case LOAD_MESH_INTO_LAYOUT_VIEW:
 
@@ -143,177 +169,87 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         steno.debug("Startup status was: " + startupStatus.name());
     }
 
-    private static AutoMakerInterAppRequest createInterAppRequest(String parameterString)
-    {
-        AutoMakerInterAppRequest returnValue = null;
-
-        AutoMakerInterAppRequestCommands interAppCommand = AutoMakerInterAppRequestCommands.NONE;
-        List<InterAppParameter> interAppParameters = new ArrayList<>();
-
-        steno.info("Parameter string was: " + parameterString);
-        if (parameterString != null
-                && parameterString.startsWith(uriScheme))
-        {
-            //We've been started through a URI scheme
-            parameterString = parameterString.replaceAll(uriScheme, "");
-
-            String[] paramParts = parameterString.split(paramDivider);
-            if (paramParts.length == 2)
-            {
-//                    steno.info("Viable param:" + potentialParam + "->" + paramParts[0] + " -------- " + paramParts[1]);
-                // Got a viable param
-                switch (paramParts[0])
-                {
-                    case "loadModel":
-                        String[] subParams = paramParts[1].split("&");
-
-                        for (String subParam : subParams)
-                        {
-                            InterAppParameter parameter = InterAppParameter.fromParts(subParam);
-                            if (parameter != null)
-                            {
-                                interAppParameters.add(parameter);
-                            }
-                        }
-                        if (interAppParameters.size() > 0)
-                        {
-                            interAppCommand = AutoMakerInterAppRequestCommands.LOAD_MESH_INTO_LAYOUT_VIEW;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        returnValue = new AutoMakerInterAppRequest();
-        returnValue.setCommand(interAppCommand);
-        returnValue.setUrlEncodedParameters(interAppParameters);
-
-        return returnValue;
-    }
-
     @Override
     public void start(Stage stage) throws Exception
     {
-        BaseConfiguration.initialise(AutoMaker.class);
-        Lookup.setupDefaultValues();
-
-        ApplicationUtils.outputApplicationStartupBanner(
-                this.getClass());
         mainStage = new Stage();
 
-        final Task<Boolean> mainStagePreparer = new Task<Boolean>()
+        if (checkMachineTypeRecognised(BaseLookup.getLanguageBundle()))
         {
-            @Override
-            protected Boolean call() throws InterruptedException
+            try
             {
-                try
+                displayManager = DisplayManager.getInstance();
+                i18nBundle = BaseLookup.getLanguageBundle();
+
+                String applicationName = i18nBundle.getString("application.title");
+
+                displayManager.configureDisplayManager(mainStage, applicationName,
+                        modelsToLoadAtStartup_projectName,
+                        modelsToLoadAtStartup,
+                        modelsToLoadAtStartup_dontgroup);
+
+                attachIcons(mainStage);
+
+                mainStage.setOnCloseRequest((WindowEvent event) ->
                 {
-                    attachIcons(mainStage);
+                    boolean transferringDataToPrinter = false;
+                    boolean willShutDown = true;
 
-                    commsManager = RoboxCommsManager.
-                            getInstance(BaseConfiguration.getBinariesDirectory());
-
-                    try
+                    for (Printer printer : BaseLookup.getConnectedPrinters())
                     {
-                        configuration = Configuration.getInstance();
-                    } catch (ConfigNotLoadedException ex)
-                    {
-                        steno.error("Couldn't load application configuration");
+                        transferringDataToPrinter = transferringDataToPrinter
+                                | printer.getPrintEngine().transferGCodeToPrinterService.isRunning();
                     }
 
-                    displayManager = DisplayManager.getInstance();
-                    i18nBundle = BaseLookup.getLanguageBundle();
-
-                    checkMachineTypeRecognised(i18nBundle);
-
-                    String applicationName = i18nBundle.getString("application.title");
-                    displayManager.configureDisplayManager(mainStage, applicationName,
-                            modelsToLoadAtStartup_projectName,
-                            modelsToLoadAtStartup,
-                            modelsToLoadAtStartup_dontgroup);
-
-                    mainStage.setOnCloseRequest((WindowEvent event) ->
+                    if (transferringDataToPrinter)
                     {
-                        boolean transferringDataToPrinter = false;
-                        boolean willShutDown = true;
+                        boolean shutDownAnyway = BaseLookup.getSystemNotificationHandler().
+                                showJobsTransferringShutdownDialog();
 
-                        for (Printer printer : BaseLookup.getConnectedPrinters())
+                        if (shutDownAnyway)
                         {
-                            transferringDataToPrinter = transferringDataToPrinter
-                                    | printer.getPrintEngine().transferGCodeToPrinterService.isRunning();
-                        }
-
-                        if (transferringDataToPrinter)
-                        {
-                            boolean shutDownAnyway = BaseLookup.getSystemNotificationHandler().
-                                    showJobsTransferringShutdownDialog();
-
-                            if (shutDownAnyway)
+                            for (Printer printer : BaseLookup.getConnectedPrinters())
                             {
-                                for (Printer printer : BaseLookup.getConnectedPrinters())
+                                waitingForCancelFrom.add(printer);
+
+                                try
                                 {
-                                    waitingForCancelFrom.add(printer);
-
-                                    try
+                                    printer.cancel((TaskResponse taskResponse) ->
                                     {
-                                        printer.cancel((TaskResponse taskResponse) ->
-                                        {
-                                            waitingForCancelFrom.remove(printer);
-                                        });
-                                    } catch (PrinterException ex)
-                                    {
-                                        steno.error("Error cancelling print on printer " + printer.
-                                                getPrinterIdentity().printerFriendlyNameProperty().get()
-                                                + " - "
-                                                + ex.getMessage());
-                                    }
+                                        waitingForCancelFrom.remove(printer);
+                                    });
+                                } catch (PrinterException ex)
+                                {
+                                    steno.error("Error cancelling print on printer " + printer.
+                                            getPrinterIdentity().printerFriendlyNameProperty().get()
+                                            + " - "
+                                            + ex.getMessage());
                                 }
-                            } else
-                            {
-                                event.consume();
-                                willShutDown = false;
                             }
-                        }
-
-                        if (willShutDown)
-                        {
-                            ApplicationUtils.outputApplicationShutdownBanner();
-                            Platform.exit();
                         } else
                         {
-                            steno.info("Shutdown aborted - transfers to printer were in progress");
+                            event.consume();
+                            willShutDown = false;
                         }
-                    });
-
-                    VBox statusSupplementaryPage = null;
-
-                    try
-                    {
-                        URL mainPageURL = getClass().getResource(
-                                "/celtech/automaker/resources/fxml/SupplementaryStatusPage.fxml");
-                        FXMLLoader configurationSupplementaryStatusPageLoader = new FXMLLoader(
-                                mainPageURL,
-                                i18nBundle);
-                        statusSupplementaryPage = (VBox) configurationSupplementaryStatusPageLoader.
-                                load();
-                    } catch (IOException ex)
-                    {
-                        steno.error("Failed to load supplementary status page:" + ex.getMessage());
-                        System.err.println(ex);
                     }
-                } catch (Throwable ex)
-                {
-                    ex.printStackTrace();
-                    Platform.exit();
-                }
-                return false;
+
+                    if (willShutDown)
+                    {
+                        ApplicationUtils.outputApplicationShutdownBanner();
+                        Platform.exit();
+                    } else
+                    {
+                        steno.info("Shutdown aborted - transfers to printer were in progress");
+                    }
+                });
+            } catch (Throwable ex)
+            {
+                ex.printStackTrace();
+                Platform.exit();
             }
 
-        };
-
-        showSplash(stage, mainStagePreparer);
+            showMainStage();
+        }
     }
 
     private void attachIcons(Stage stage)
@@ -332,92 +268,17 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         if (requiresShutdown)
         {
             Platform.exit();
-        } else
-        {
-            if (check3DSupported(i18nBundle))
-            {
-                WelcomeToApplicationManager.displayWelcomeIfRequired();
-                commsManager.start();
-            }
         }
     }
 
-    /**
-     * The main() method is ignored in correctly deployed JavaFX application.
-     * main() serves only as fallback in case the application can not be
-     * launched through deployment artifacts, e.g., in IDEs with limited FX
-     * support. NetBeans ignores main().
-     *
-     * @param args the command line arguments
-     */
-    public static
-            void main(String[] args)
+    public static void main(String[] args)
     {
-        try
-        {
-            Class cEAWTApplication = Class.forName("com.apple.eawt.Application");
-            Class cEAWTAppEventListener = Class.forName("com.apple.eawt.AppEventListener");
-            Class cEAWTSystemSleepListener = Class.forName("com.apple.eawt.SystemSleepListener");
-
-            Method[] appMethods = cEAWTApplication.getDeclaredMethods();
-            for (Method meth : appMethods)
-            {
-                steno.info("Method:" + meth.toGenericString());
-            }
-            Method mGetApplication = cEAWTApplication.getDeclaredMethod("getApplication");
-
-            Class[] mAddAppEventListenerArgs = new Class[1];
-            mAddAppEventListenerArgs[0] = cEAWTAppEventListener;
-
-            Method mAddAppEventListener = cEAWTApplication.getMethod("addAppEventListener", mAddAppEventListenerArgs);
-
-            Object reopenListener = Proxy.newProxyInstance(cEAWTSystemSleepListener.getClassLoader(), new Class<?>[]
-            {
-                cEAWTSystemSleepListener
-            }, new InvocationHandler()
-            {
-                @Override
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
-                {
-                    //Handle the invocations
-                    if (method.getName().equals("systemAboutToSleep"))
-                    {
-                        steno.info("Called with systemAboutToSleep");
-                        for (Object arg : args)
-                        {
-                            steno.info("Arg: " + arg.getClass().toGenericString());
-                        }
-                        return 1;
-                    } else if (method.getName().equals("systemAwoke"))
-                    {
-                        steno.info("Called with systemAwoke");
-                        for (Object arg : args)
-                        {
-                            steno.info("Arg: " + arg.getClass().toGenericString());
-                        }
-                        return 1;
-                    } else
-                    {
-                        steno.info("Called with " + method.getName());
-                        return 1;
-                    }
-                }
-            });
-
-            Object application = mGetApplication.invoke(null, null);
-            mAddAppEventListener.invoke(application, reopenListener);
-
-            steno.info("Registered for Mac-specific events:" + application.getClass().toGenericString());
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException ex)
-        {
-            steno.exception("Unable to register for Mac-specific events", ex);
-        }
-        launch(args);
+        LauncherImpl.launchApplication(AutoMaker.class, AutoMakerPreloader.class, args);
     }
 
     @Override
     public void stop() throws Exception
-    {        
+    {
         interAppCommsListener.shutdown();
 
         if (localWebInterface != null)
@@ -432,9 +293,18 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             timeoutStrikes--;
         }
 
-        commsManager.shutdown();
-        autoUpdater.shutdown();
-        displayManager.shutdown();
+        if (commsManager != null)
+        {
+            commsManager.shutdown();
+        }
+        if (autoUpdater != null)
+        {
+            autoUpdater.shutdown();
+        }
+        if (displayManager != null)
+        {
+            displayManager.shutdown();
+        }
         BaseConfiguration.shutdown();
         ApplicationConfiguration.writeApplicationMemory();
 
@@ -518,83 +388,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         return numberOfThreads > 0;
     }
 
-    private void showSplash(Stage splashStage, Task<Boolean> mainStagePreparer)
-    {
-        splashStage.setAlwaysOnTop(true);
-        attachIcons(splashStage);
-
-        Image splashImage = new Image(getClass().getResourceAsStream(
-                ApplicationConfiguration.imageResourcePath
-                + "Splash - AutoMaker (Drop Shadow) 600x400.png"));
-        ImageView splash = new ImageView(splashImage);
-
-        splashWidth = splashImage.getWidth();
-        splashHeight = splashImage.getHeight();
-        splashLayout = new AnchorPane();
-
-        SimpleDateFormat yearFormatter = new SimpleDateFormat("YYYY");
-        String yearString = yearFormatter.format(new Date());
-        Text copyrightLabel = new Text("© " + yearString
-                + " CEL Technology Ltd. All Rights Reserved.");
-        copyrightLabel.getStyleClass().add("splashCopyright");
-        AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
-        AnchorPane.setLeftAnchor(copyrightLabel, 50.0);
-
-        String versionString = BaseConfiguration.getApplicationVersion();;
-        Text versionLabel = new Text("Version " + versionString);
-        versionLabel.getStyleClass().add("splashVersion");
-        AnchorPane.setBottomAnchor(versionLabel, 45.0);
-        AnchorPane.setRightAnchor(versionLabel, 50.0);
-
-        splashLayout.setStyle("-fx-background-color: rgba(255, 0, 0, 0);");
-        splashLayout.getChildren().addAll(splash, copyrightLabel, versionLabel);
-
-        Scene splashScene = new Scene(splashLayout, Color.TRANSPARENT);
-        splashScene.getStylesheets().add(ApplicationConfiguration.getMainCSSFile());
-        splashStage.initStyle(StageStyle.TRANSPARENT);
-
-        final Rectangle2D bounds = Screen.getPrimary().getBounds();
-        splashStage.setScene(splashScene);
-        splashStage.setX(bounds.getMinX() + bounds.getWidth() / 2 - splashWidth / 2);
-        splashStage.setY(bounds.getMinY() + bounds.getHeight() / 2 - splashHeight / 2);
-
-        mainStagePreparer.stateProperty().addListener((observableValue, oldState, newState) ->
-        {
-            if (newState == Worker.State.SUCCEEDED)
-            {
-                showMainStage();
-                FadeTransition fadeSplash = new FadeTransition(Duration.seconds(2), splashLayout);
-                fadeSplash.setFromValue(1.0);
-                fadeSplash.setToValue(0.0);
-                fadeSplash.setOnFinished(actionEvent ->
-                {
-                    splashStage.hide();
-                    splashStage.setAlwaysOnTop(false);
-                });
-                fadeSplash.play();
-            }
-        });
-
-        splashStage.show();
-
-        Thread aThread = new Thread(() ->
-        {
-            try
-            {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex)
-            {
-            }
-
-            BaseLookup.getTaskExecutor().runOnGUIThread(() ->
-            {
-                mainStagePreparer.run();
-            });
-        });
-
-        aThread.start();
-    }
-
     private void showMainStage()
     {
         final AutoUpdateCompletionListener completeListener = this;
@@ -606,6 +399,14 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                             BaseConfiguration.getApplicationName()),
                     completeListener);
             autoUpdater.start();
+
+            if (check3DSupported(i18nBundle))
+            {
+                steno.debug("3D support OK");
+                WelcomeToApplicationManager.displayWelcomeIfRequired();
+                steno.debug("Starting comms manager");
+                commsManager.start();
+            }
 
 //            localWebInterface = new LocalWebInterface();
 //            localWebInterface.start();
@@ -625,8 +426,11 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         mainStage.show();
     }
 
-    private static void processIncomingComms(InterAppRequest interAppRequest)
+    @Override
+    public void incomingComms(InterAppRequest interAppRequest)
     {
+        steno.info("Received an InterApp comms request: " + interAppRequest.toString());
+
         if (interAppRequest instanceof AutoMakerInterAppRequest)
         {
             AutoMakerInterAppRequest amRequest = (AutoMakerInterAppRequest) interAppRequest;
@@ -661,11 +465,5 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     break;
             }
         }
-    }
-
-    @Override
-    public void incomingComms(InterAppRequest interAppRequest)
-    {
-        processIncomingComms(interAppRequest);
     }
 }

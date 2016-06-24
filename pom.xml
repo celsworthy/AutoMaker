@@ -89,6 +89,12 @@
     </build>
     <dependencies>
         <dependency>
+            <groupId>libertysystems</groupId>
+            <artifactId>Stenographer</artifactId>
+            <version>1.7</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
             <groupId>celtech</groupId>
             <artifactId>RoboxBase</artifactId>
             <version>1.0</version>

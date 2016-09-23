@@ -306,7 +306,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             displayManager.shutdown();
         }
         BaseConfiguration.shutdown();
-        ApplicationConfiguration.writeApplicationMemory();
 
         if (steno.getCurrentLogLevel().isLoggable(LogLevel.DEBUG))
         {

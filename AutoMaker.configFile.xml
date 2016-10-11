@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
 	<ApplicationConfiguration>
-	<AppFolderName>CEL Robox</AppFolderName>
+	<AppFolderName>CEL AutoMaker</AppFolderName>
         <ApplicationName>CEL AutoMaker</ApplicationName>
         <ApplicationShortName>AutoMaker</ApplicationShortName>
         <ApplicationDataStorageDirectory>$APPDATA_HOME$/#ApplicationConfiguration:AppFolderName#/DEV/</ApplicationDataStorageDirectory>

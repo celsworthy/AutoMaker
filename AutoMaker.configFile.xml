@@ -4,7 +4,7 @@
 	<AppFolderName>CEL AutoMaker</AppFolderName>
         <ApplicationName>CEL AutoMaker</ApplicationName>
         <ApplicationShortName>AutoMaker</ApplicationShortName>
-        <ApplicationDataStorageDirectory>$APPDATA_HOME$/#ApplicationConfiguration:AppFolderName#/DEV/</ApplicationDataStorageDirectory>
+        <ApplicationDataStorageDirectory>$APPDATA_HOME$/#ApplicationConfiguration:AppFolderName#/</ApplicationDataStorageDirectory>
         <UserDataStorageDirectory>$USER_HOME$/DEV/</UserDataStorageDirectory>
         <requiredFirmwareVersion>752</requiredFirmwareVersion>
         <DefaultMode>Normal</DefaultMode>

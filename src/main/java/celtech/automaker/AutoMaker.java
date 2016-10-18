@@ -3,6 +3,7 @@ package celtech.automaker;
 import celtech.Lookup;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
+import celtech.roboxbase.ApplicationFeature;
 import celtech.roboxbase.BaseLookup;
 import celtech.roboxbase.comms.RoboxCommsManager;
 import celtech.roboxbase.comms.interapp.InterAppCommsConsumer;
@@ -121,6 +122,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             BaseConfiguration.initialise(AutoMaker.class);
             Lookup.setupDefaultValues();
+            BaseConfiguration.enableApplicationFeature(ApplicationFeature.AUTO_UPDATE_FIRMWARE);
 
             ApplicationUtils.outputApplicationStartupBanner(this.getClass());
 

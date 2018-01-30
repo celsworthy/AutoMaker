@@ -15,7 +15,13 @@ import static org.junit.Assert.*;
  */
 public class AutoMakerInterAppRequestTest
 {
-
+    static
+    {
+        // Set the libertySystems config file property to inidicate it is a test request.
+        // The property is set in this static initializer because the configuration is loaded before the test is run.
+        System.setProperty("libertySystems.configFile", "$test$");
+    }
+    
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final String jsonifiedClass = "{\"@class\":\"celtech.automaker.AutoMakerInterAppRequest\",\"command\":\"LOAD_MESH_INTO_LAYOUT_VIEW\",\"urlEncodedParameters\":[{\"type\":\"PROJECT_NAME\",\"urlEncodedParameter\":\"A project\"},{\"type\":\"MODEL_NAME\",\"urlEncodedParameter\":\"A model with spaces\"},{\"type\":\"MODEL_NAME\",\"urlEncodedParameter\":\"Another model with spaces\"}]}";
 

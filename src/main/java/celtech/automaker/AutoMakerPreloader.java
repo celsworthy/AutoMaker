@@ -38,9 +38,7 @@ public class AutoMakerPreloader extends Preloader
 
     static
     {
-        System.out.println("AutoMakerPreloader:Getting stenographer.");
         steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
-        System.out.println("AutoMakerPreloader:Got stenographer.");
     }
 
     @Override

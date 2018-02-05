@@ -50,9 +50,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
     static
     {
-        System.out.println("AutoMaker:Getting stenographer.");
         steno = StenographerFactory.getStenographer(AutoMaker.class.getName());
-        System.out.println("AutoMaker:Got stenographer.");
     }
     private static DisplayManager displayManager = null;
     private ResourceBundle i18nBundle = null;

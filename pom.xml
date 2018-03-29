@@ -4,7 +4,7 @@
 
     <groupId>celtech</groupId>
     <artifactId>AutoMaker</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
     
     <name>AutoMaker</name>
@@ -108,12 +108,12 @@
         <dependency>
             <groupId>celtech</groupId>
             <artifactId>RoboxBase</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>celtech</groupId>
             <artifactId>CELTechCore</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2</version>
             <type>jar</type>
         </dependency>
         <dependency>

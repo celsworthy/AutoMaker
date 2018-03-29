@@ -1,6 +1,7 @@
 package celtech.automaker;
 
 import celtech.configuration.ApplicationConfiguration;
+import celtech.roboxbase.configuration.BaseConfiguration;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javafx.animation.FadeTransition;
@@ -70,8 +71,8 @@ public class AutoMakerPreloader extends Preloader
         AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
         AnchorPane.setLeftAnchor(copyrightLabel, 50.0);
 
-        String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
-        String versionString = ApplicationConfiguration.getApplicationVersion();;
+        String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+        String versionString = BaseConfiguration.getApplicationVersion();;
         Text versionLabel = new Text("Version " + versionString);
         versionLabel.getStyleClass().add("splashVersion");
         AnchorPane.setBottomAnchor(versionLabel, 45.0);

@@ -1,21 +1,24 @@
 package celtech.automaker;
 
 import celtech.Lookup;
-import celtech.comms.interapp.InterAppCommsConsumer;
-import celtech.comms.interapp.InterAppCommsThread;
-import celtech.comms.interapp.InterAppRequest;
-import celtech.comms.interapp.InterAppStartupStatus;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.coreUI.DisplayManager;
-import celtech.printerControl.comms.RoboxCommsManager;
-import celtech.printerControl.model.Printer;
-import celtech.printerControl.model.PrinterException;
+import celtech.roboxbase.ApplicationFeature;
+import celtech.roboxbase.BaseLookup;
+import celtech.roboxbase.comms.RoboxCommsManager;
+import celtech.roboxbase.comms.interapp.InterAppCommsConsumer;
+import celtech.roboxbase.comms.interapp.InterAppCommsThread;
+import celtech.roboxbase.comms.interapp.InterAppRequest;
+import celtech.roboxbase.comms.interapp.InterAppStartupStatus;
+import celtech.roboxbase.configuration.BaseConfiguration;
+import celtech.roboxbase.printerControl.model.Printer;
+import celtech.roboxbase.printerControl.model.PrinterException;
+import celtech.roboxbase.utils.ApplicationUtils;
+import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
-import celtech.utils.application.ApplicationUtils;
-import celtech.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
 import com.sun.javafx.application.LauncherImpl;
 import java.util.ArrayList;
@@ -117,13 +120,13 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
         if (startupStatus == InterAppStartupStatus.STARTED_OK)
         {
-            String installDir = ApplicationConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+            BaseConfiguration.initialise(AutoMaker.class);
             Lookup.setupDefaultValues();
+            BaseConfiguration.enableApplicationFeature(ApplicationFeature.AUTO_UPDATE_FIRMWARE);
 
             ApplicationUtils.outputApplicationStartupBanner(this.getClass());
 
-            commsManager = RoboxCommsManager.
-                    getInstance(ApplicationConfiguration.getBinariesDirectory());
+            commsManager = RoboxCommsManager.getInstance(BaseConfiguration.getBinariesDirectory(), false, Lookup.getUserPreferences().detectLoadedFilamentProperty(), true);
 
             try
             {
@@ -172,12 +175,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
     {
         mainStage = new Stage();
 
-        if (checkMachineTypeRecognised(Lookup.getLanguageBundle()))
+        if (checkMachineTypeRecognised(BaseLookup.getLanguageBundle()))
         {
             try
             {
                 displayManager = DisplayManager.getInstance();
-                i18nBundle = Lookup.getLanguageBundle();
+                i18nBundle = BaseLookup.getLanguageBundle();
 
                 String applicationName = i18nBundle.getString("application.title");
 
@@ -193,7 +196,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                     boolean transferringDataToPrinter = false;
                     boolean willShutDown = true;
 
-                    for (Printer printer : Lookup.getConnectedPrinters())
+                    for (Printer printer : BaseLookup.getConnectedPrinters())
                     {
                         transferringDataToPrinter = transferringDataToPrinter
                                 | printer.getPrintEngine().transferGCodeToPrinterService.isRunning();
@@ -201,12 +204,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
                     if (transferringDataToPrinter)
                     {
-                        boolean shutDownAnyway = Lookup.getSystemNotificationHandler().
+                        boolean shutDownAnyway = BaseLookup.getSystemNotificationHandler().
                                 showJobsTransferringShutdownDialog();
 
                         if (shutDownAnyway)
                         {
-                            for (Printer printer : Lookup.getConnectedPrinters())
+                            for (Printer printer : BaseLookup.getConnectedPrinters())
                             {
                                 waitingForCancelFrom.add(printer);
 
@@ -215,7 +218,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                     printer.cancel((TaskResponse taskResponse) ->
                                     {
                                         waitingForCancelFrom.remove(printer);
-                                    });
+                                    }, Lookup.getUserPreferences().isSafetyFeaturesOn());
                                 } catch (PrinterException ex)
                                 {
                                     steno.error("Error cancelling print on printer " + printer.
@@ -303,7 +306,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         {
             displayManager.shutdown();
         }
-        ApplicationConfiguration.writeApplicationMemory();
+        BaseConfiguration.shutdown();
 
         if (steno.getCurrentLogLevel().isLoggable(LogLevel.DEBUG))
         {
@@ -311,7 +314,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         }
 
         Thread.sleep(5000);
-        Lookup.setShuttingDown(true);
+        BaseLookup.setShuttingDown(true);
     }
 
 //    private void setAppUserIDForWindows()
@@ -385,30 +388,15 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         return numberOfThreads > 0;
     }
 
-////        mainStagePreparer.stateProperty().addListener((observableValue, oldState, newState) ->
-////        {
-////            if (newState == Worker.State.SUCCEEDED)
-////            {
-////                if (mainStagePreparer.getValue())
-////                {
-////                    steno.debug("show main stage");
-////                    showMainStage();
-////                    steno.debug("end show main stage");
-////                } else
-////                {
-////                    steno.warning("Told not to start up");
-////                }
-////            }
-////        });
     private void showMainStage()
     {
         final AutoUpdateCompletionListener completeListener = this;
 
         mainStage.setOnShown((WindowEvent event) ->
         {
-            autoUpdater = new AutoUpdate(ApplicationConfiguration.getApplicationShortName(),
+            autoUpdater = new AutoUpdate(BaseConfiguration.getApplicationShortName(),
                     ApplicationConfiguration.getDownloadModifier(
-                            ApplicationConfiguration.getApplicationName()),
+                            BaseConfiguration.getApplicationName()),
                     completeListener);
             autoUpdater.start();
 

@@ -1,6 +1,6 @@
 package celtech.automaker;
 
-import celtech.comms.interapp.InterAppRequest;
+import celtech.roboxbase.comms.interapp.InterAppRequest;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.List;

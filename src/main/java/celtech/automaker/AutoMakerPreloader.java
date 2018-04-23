@@ -66,7 +66,7 @@ public class AutoMakerPreloader extends Preloader
         SimpleDateFormat yearFormatter = new SimpleDateFormat("YYYY");
         String yearString = yearFormatter.format(new Date());
         Text copyrightLabel = new Text("© " + yearString
-                + " CEL Technology Ltd. All Rights Reserved.");
+                + " C Enterprise (UK) Ltd. All Rights Reserved.");
         copyrightLabel.getStyleClass().add("splashCopyright");
         AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
         AnchorPane.setLeftAnchor(copyrightLabel, 50.0);

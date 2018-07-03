@@ -7,18 +7,18 @@ import celtech.roboxbase.ApplicationFeature;
 import celtech.roboxbase.BaseLookup;
 import celtech.roboxbase.comms.RoboxCommsManager;
 import celtech.roboxbase.comms.interapp.InterAppCommsConsumer;
-import celtech.roboxbase.configuration.BaseConfiguration;
 import celtech.roboxbase.comms.interapp.InterAppCommsThread;
 import celtech.roboxbase.comms.interapp.InterAppRequest;
 import celtech.roboxbase.comms.interapp.InterAppStartupStatus;
+import celtech.roboxbase.configuration.BaseConfiguration;
 import celtech.roboxbase.printerControl.model.Printer;
 import celtech.roboxbase.printerControl.model.PrinterException;
 import celtech.roboxbase.utils.ApplicationUtils;
+import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.utils.AutoUpdate;
 import celtech.utils.AutoUpdateCompletionListener;
 import static celtech.utils.SystemValidation.check3DSupported;
 import static celtech.utils.SystemValidation.checkMachineTypeRecognised;
-import celtech.roboxbase.utils.tasks.TaskResponse;
 import celtech.webserver.LocalWebInterface;
 import com.sun.javafx.application.LauncherImpl;
 import java.util.ArrayList;
@@ -218,7 +218,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                                     printer.cancel((TaskResponse taskResponse) ->
                                     {
                                         waitingForCancelFrom.remove(printer);
-                                    });
+                                    }, Lookup.getUserPreferences().isSafetyFeaturesOn());
                                 } catch (PrinterException ex)
                                 {
                                     steno.error("Error cancelling print on printer " + printer.

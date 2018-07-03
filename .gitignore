@@ -5,7 +5,5 @@ movetag.sh
 nbactions.xml
 *~
 /src/main/java/celtech/automaker/resources/images/Thumbs.db
-/target - Copy/
-/target - Copy (2)/
-/blobb/
-/blob b/
+nb-configuration.xml
+

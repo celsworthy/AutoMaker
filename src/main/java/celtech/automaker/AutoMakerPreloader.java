@@ -2,6 +2,7 @@ package celtech.automaker;
 
 import celtech.configuration.ApplicationConfiguration;
 import celtech.roboxbase.configuration.BaseConfiguration;
+import celtech.roboxbase.licensing.LicenseManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javafx.animation.FadeTransition;
@@ -44,6 +45,9 @@ public class AutoMakerPreloader extends Preloader
     @Override
     public void start(Stage stage) throws Exception
     {
+        // Before splash check license
+        checkLicenseFile();
+        
         this.preloaderStage = stage;
         steno.debug("show splash - start");
         preloaderStage.toFront();
@@ -112,5 +116,9 @@ public class AutoMakerPreloader extends Preloader
             SequentialTransition splashSequence = new SequentialTransition(pauseForABit, fadeSplash);
             splashSequence.play();
         }
+    }
+    
+    private void checkLicenseFile() {
+        LicenseManager.getInstance().validateLicense();
     }
 }

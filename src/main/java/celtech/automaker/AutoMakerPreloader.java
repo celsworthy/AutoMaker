@@ -1,6 +1,7 @@
 package celtech.automaker;
 
 import celtech.configuration.ApplicationConfiguration;
+import celtech.roboxbase.ApplicationFeature;
 import celtech.roboxbase.configuration.BaseConfiguration;
 import celtech.roboxbase.licensing.LicenseManager;
 import java.text.SimpleDateFormat;
@@ -62,7 +63,7 @@ public class AutoMakerPreloader extends Preloader
                 ApplicationConfiguration.imageResourcePath
                 + "Splash - AutoMaker (Drop Shadow) 600x400.png"));
         ImageView splash = new ImageView(splashImage);
-
+        
         splashWidth = splashImage.getWidth();
         splashHeight = splashImage.getHeight();
         splashLayout = new AnchorPane();
@@ -76,7 +77,12 @@ public class AutoMakerPreloader extends Preloader
         AnchorPane.setLeftAnchor(copyrightLabel, 50.0);
 
         String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
-        String versionString = BaseConfiguration.getApplicationVersion();;
+        String versionString;
+        if(BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.PRO_SPLASH_SCREEN)) {
+            versionString = "SUPER MEGA PRO VERSION";
+        } else {
+            versionString = BaseConfiguration.getApplicationVersion();
+        }
         Text versionLabel = new Text("Version " + versionString);
         versionLabel.getStyleClass().add("splashVersion");
         AnchorPane.setBottomAnchor(versionLabel, 45.0);
@@ -119,6 +125,6 @@ public class AutoMakerPreloader extends Preloader
     }
     
     private void checkLicenseFile() {
-        LicenseManager.getInstance().validateLicense();
+        LicenseManager.getInstance().validateLicense(false);
     }
 }

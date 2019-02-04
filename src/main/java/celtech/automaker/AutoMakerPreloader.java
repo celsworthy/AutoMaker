@@ -79,7 +79,7 @@ public class AutoMakerPreloader extends Preloader
         String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         String versionString;
         if(BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.PRO_SPLASH_SCREEN)) {
-            versionString = "SUPER MEGA PRO VERSION";
+            versionString = BaseConfiguration.getApplicationVersion() + "_P";
         } else {
             versionString = BaseConfiguration.getApplicationVersion();
         }

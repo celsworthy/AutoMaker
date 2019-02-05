@@ -11,8 +11,8 @@ import celtech.roboxbase.comms.interapp.InterAppCommsThread;
 import celtech.roboxbase.comms.interapp.InterAppRequest;
 import celtech.roboxbase.comms.interapp.InterAppStartupStatus;
 import celtech.roboxbase.configuration.BaseConfiguration;
-import celtech.roboxbase.licensing.LicenseManager;
-import celtech.roboxbase.licensing.LicensePrinterListChangeListener;
+import celtech.roboxbase.licensing.LicenceManager;
+import celtech.roboxbase.licensing.LicensedPrinterListChangeListener;
 import celtech.roboxbase.printerControl.model.Printer;
 import celtech.roboxbase.printerControl.model.PrinterException;
 import celtech.roboxbase.utils.ApplicationUtils;
@@ -127,7 +127,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.AUTO_UPDATE_FIRMWARE);
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.RESET_PRINTER_ID);
             
-            BaseLookup.getPrinterListChangesNotifier().addListener(new LicensePrinterListChangeListener());
+            BaseLookup.getPrinterListChangesNotifier().addListener(new LicensedPrinterListChangeListener());
             
             ApplicationUtils.outputApplicationStartupBanner(this.getClass());
 
@@ -417,7 +417,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            localWebInterface.start();
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
 
-            LicenseManager.getInstance().validateLicense(true);
+            LicenceManager.getInstance().validateLicence(true);
         });
         mainStage.setAlwaysOnTop(false);
 

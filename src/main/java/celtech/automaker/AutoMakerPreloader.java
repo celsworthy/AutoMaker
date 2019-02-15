@@ -75,10 +75,9 @@ public class AutoMakerPreloader extends Preloader
         Text copyrightLabel = new Text("© " + yearString
                 + " C Enterprise (UK) Ltd. All Rights Reserved.");
         copyrightLabel.getStyleClass().add("splashCopyright");
-        AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
-        AnchorPane.setLeftAnchor(copyrightLabel, 35.0);
+        AnchorPane.setBottomAnchor(copyrightLabel, 38.0);
+        AnchorPane.setLeftAnchor(copyrightLabel, 21.0);
 
-        String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         String versionString;
         if(BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.PRO_SPLASH_SCREEN)) {
             versionString = BaseConfiguration.getApplicationVersion() + "_P";
@@ -87,8 +86,8 @@ public class AutoMakerPreloader extends Preloader
         }
         Text versionLabel = new Text("Version " + versionString);
         versionLabel.getStyleClass().add("splashVersion");
-        AnchorPane.setBottomAnchor(versionLabel, 25.0);
-        AnchorPane.setLeftAnchor(versionLabel, 35.0);
+        AnchorPane.setBottomAnchor(versionLabel, 20.0);
+        AnchorPane.setLeftAnchor(versionLabel, 21.0);
 
         splashLayout.setStyle("-fx-background-color: rgba(255, 0, 0, 0);");
         splashLayout.getChildren().addAll(splash, copyrightLabel, versionLabel);

@@ -39,7 +39,7 @@ import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.LogLevel;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
-import sun.misc.ThreadGroupUtils;
+import sun.awt.util.ThreadGroupUtils;
 
 /**
  *
@@ -372,7 +372,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         int numberOfThreads = rootThreadGroup.activeCount();
         Thread[] threadList = new Thread[numberOfThreads];
         rootThreadGroup.enumerate(threadList, true);
-
+    
         if (numberOfThreads > 0)
         {
             steno.info("There are " + numberOfThreads + " threads running:");
@@ -389,7 +389,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 steno.passthrough("---------------------------------------------------");
             }
         }
-
+    
         return numberOfThreads > 0;
     }
 

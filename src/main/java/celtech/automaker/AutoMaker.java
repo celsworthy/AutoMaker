@@ -418,6 +418,12 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
 
             LicenceManager.getInstance().validateLicence(true);
+            
+            // Offline printer check
+            if (Lookup.getUserPreferences().isCustomPrinterEnabled())
+            {
+                RoboxCommsManager.getInstance().addDummyPrinter(true);
+            }
         });
         mainStage.setAlwaysOnTop(false);
 

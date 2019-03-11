@@ -46,7 +46,9 @@ public class AutoMakerPreloader extends Preloader
     @Override
     public void start(Stage stage) throws Exception
     {
-        // Before splash check license
+        // Before splash initialise the BaseConfiguration application install directory and check the license
+        // so it can get the version string. (Without this, BaseConfiguration.getApplicationVersion() returns null.)
+        BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
         checkLicenceFile();
         
         this.preloaderStage = stage;

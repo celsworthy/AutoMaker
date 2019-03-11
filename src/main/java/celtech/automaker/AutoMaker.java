@@ -417,7 +417,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            localWebInterface.start();
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
 
-            LicenceManager.getInstance().validateLicence(true);
+            LicenceManager.getInstance().validateLicence(false);
             
             // Offline printer check
             if (Lookup.getUserPreferences().isCustomPrinterEnabled())

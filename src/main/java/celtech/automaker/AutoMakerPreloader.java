@@ -1,7 +1,9 @@
 package celtech.automaker;
 
 import celtech.configuration.ApplicationConfiguration;
+import celtech.roboxbase.ApplicationFeature;
 import celtech.roboxbase.configuration.BaseConfiguration;
+import celtech.roboxbase.licensing.LicenceManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javafx.animation.FadeTransition;
@@ -44,6 +46,11 @@ public class AutoMakerPreloader extends Preloader
     @Override
     public void start(Stage stage) throws Exception
     {
+        // Before splash initialise the BaseConfiguration application install directory and check the license
+        // so it can get the version string. (Without this, BaseConfiguration.getApplicationVersion() returns null.)
+        BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
+        checkLicenceFile();
+        
         this.preloaderStage = stage;
         steno.debug("show splash - start");
         preloaderStage.toFront();
@@ -54,11 +61,13 @@ public class AutoMakerPreloader extends Preloader
                 new Image(getClass().getResourceAsStream(
                                 "/celtech/automaker/resources/images/AutoMakerIcon_32x32.png")));
 
+        String splashImageName = BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.PRO_SPLASH_SCREEN) 
+                ? "Splash_AutoMakerPro.png" : "Splash_AutoMaker.png";
         Image splashImage = new Image(getClass().getResourceAsStream(
-                ApplicationConfiguration.imageResourcePath
-                + "Splash - AutoMaker (Drop Shadow) 600x400.png"));
-        ImageView splash = new ImageView(splashImage);
+                ApplicationConfiguration.imageResourcePath + splashImageName));
 
+        ImageView splash = new ImageView(splashImage);
+        
         splashWidth = splashImage.getWidth();
         splashHeight = splashImage.getHeight();
         splashLayout = new AnchorPane();
@@ -68,15 +77,19 @@ public class AutoMakerPreloader extends Preloader
         Text copyrightLabel = new Text("© " + yearString
                 + " C Enterprise (UK) Ltd. All Rights Reserved.");
         copyrightLabel.getStyleClass().add("splashCopyright");
-        AnchorPane.setBottomAnchor(copyrightLabel, 45.0);
-        AnchorPane.setLeftAnchor(copyrightLabel, 50.0);
+        AnchorPane.setBottomAnchor(copyrightLabel, 38.0);
+        AnchorPane.setLeftAnchor(copyrightLabel, 21.0);
 
-        String installDir = BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
-        String versionString = BaseConfiguration.getApplicationVersion();;
+        String versionString;
+        if(BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.PRO_SPLASH_SCREEN)) {
+            versionString = BaseConfiguration.getApplicationVersion() + "_P";
+        } else {
+            versionString = BaseConfiguration.getApplicationVersion();
+        }
         Text versionLabel = new Text("Version " + versionString);
         versionLabel.getStyleClass().add("splashVersion");
-        AnchorPane.setBottomAnchor(versionLabel, 45.0);
-        AnchorPane.setRightAnchor(versionLabel, 50.0);
+        AnchorPane.setBottomAnchor(versionLabel, 20.0);
+        AnchorPane.setLeftAnchor(versionLabel, 21.0);
 
         splashLayout.setStyle("-fx-background-color: rgba(255, 0, 0, 0);");
         splashLayout.getChildren().addAll(splash, copyrightLabel, versionLabel);
@@ -112,5 +125,9 @@ public class AutoMakerPreloader extends Preloader
             SequentialTransition splashSequence = new SequentialTransition(pauseForABit, fadeSplash);
             splashSequence.play();
         }
+    }
+    
+    private void checkLicenceFile() {
+        LicenceManager.getInstance().validateLicence(false);
     }
 }

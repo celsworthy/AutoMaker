@@ -11,6 +11,8 @@ import celtech.roboxbase.comms.interapp.InterAppCommsThread;
 import celtech.roboxbase.comms.interapp.InterAppRequest;
 import celtech.roboxbase.comms.interapp.InterAppStartupStatus;
 import celtech.roboxbase.configuration.BaseConfiguration;
+import celtech.roboxbase.licensing.LicenceManager;
+import celtech.roboxbase.licensing.LicensedPrinterListChangeListener;
 import celtech.roboxbase.printerControl.model.Printer;
 import celtech.roboxbase.printerControl.model.PrinterException;
 import celtech.roboxbase.utils.ApplicationUtils;
@@ -124,7 +126,9 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Lookup.setupDefaultValues();
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.AUTO_UPDATE_FIRMWARE);
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.RESET_PRINTER_ID);
-
+            
+            BaseLookup.getPrinterListChangesNotifier().addListener(new LicensedPrinterListChangeListener());
+            
             ApplicationUtils.outputApplicationStartupBanner(this.getClass());
 
             commsManager = RoboxCommsManager.getInstance(BaseConfiguration.getBinariesDirectory(), false, Lookup.getUserPreferences().detectLoadedFilamentProperty(), true);
@@ -412,6 +416,20 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            localWebInterface = new LocalWebInterface();
 //            localWebInterface.start();
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
+
+            LicenceManager.getInstance().validateLicence(false);
+            
+            // Offline printer check
+            if (Lookup.getUserPreferences().isCustomPrinterEnabled())
+            {
+                if (BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.OFFLINE_PRINTER))
+                {
+                    RoboxCommsManager.getInstance().addDummyPrinter(true);
+                } else 
+                {
+                    Lookup.getUserPreferences().setCustomPrinterEnabled(false);
+                }
+            }
         });
         mainStage.setAlwaysOnTop(false);
 

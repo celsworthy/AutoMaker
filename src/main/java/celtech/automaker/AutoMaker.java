@@ -422,7 +422,13 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             // Offline printer check
             if (Lookup.getUserPreferences().isCustomPrinterEnabled())
             {
-                RoboxCommsManager.getInstance().addDummyPrinter(true);
+                if (BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.OFFLINE_PRINTER))
+                {
+                    RoboxCommsManager.getInstance().addDummyPrinter(true);
+                } else 
+                {
+                    Lookup.getUserPreferences().setCustomPrinterEnabled(false);
+                }
             }
         });
         mainStage.setAlwaysOnTop(false);

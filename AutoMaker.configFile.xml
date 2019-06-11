@@ -6,7 +6,7 @@
         <ApplicationShortName>AutoMaker</ApplicationShortName>
         <ApplicationDataStorageDirectory>$APPDATA_HOME$/#ApplicationConfiguration:AppFolderName#/</ApplicationDataStorageDirectory>
         <UserDataStorageDirectory>$USER_HOME$/</UserDataStorageDirectory>
-        <requiredFirmwareVersion>766</requiredFirmwareVersion>
+        <requiredFirmwareVersion>768</requiredFirmwareVersion>
         <DefaultMode>Normal</DefaultMode>
         <DefaultLocaleLanguageTag>en-GB</DefaultLocaleLanguageTag>
 		<FakeInstallDirectory>C:\Program Files\CEL\AutoMaker\</FakeInstallDirectory>

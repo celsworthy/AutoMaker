@@ -11,6 +11,7 @@ import celtech.roboxbase.comms.interapp.InterAppCommsThread;
 import celtech.roboxbase.comms.interapp.InterAppRequest;
 import celtech.roboxbase.comms.interapp.InterAppStartupStatus;
 import celtech.roboxbase.configuration.BaseConfiguration;
+import celtech.roboxbase.licence.Licence;
 import celtech.roboxbase.licensing.LicenceManager;
 import celtech.roboxbase.licensing.LicensedPrinterListChangeListener;
 import celtech.roboxbase.printerControl.model.Printer;
@@ -25,6 +26,7 @@ import celtech.webserver.LocalWebInterface;
 import com.sun.javafx.application.LauncherImpl;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -416,6 +418,14 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 //            localWebInterface = new LocalWebInterface();
 //            localWebInterface.start();
 //            displayManager.loadExternalModels(startupModelsToLoad, true, false);
+
+            LicenceManager.getInstance().addLicenceChangeListener((Optional<Licence> licence) -> {
+                if (Lookup.getUserPreferences().isCustomPrinterEnabled()
+                        && !BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.OFFLINE_PRINTER))
+                {
+                    Lookup.getUserPreferences().setCustomPrinterEnabled(false);
+                }
+            });
 
             LicenceManager.getInstance().validateLicence(false);
             

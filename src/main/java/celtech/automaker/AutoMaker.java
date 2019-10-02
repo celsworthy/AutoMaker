@@ -281,7 +281,14 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
 
     public static void main(String[] args)
     {
-        LauncherImpl.launchApplication(AutoMaker.class, AutoMakerPreloader.class, args);
+        System.setProperty("javafx.preloader", AutoMakerPreloader.class.getName());
+        launch(args);
+        // Sometimes a thread stops the application from terminating. The
+        // problem is difficult to reproduce, and so far it has not been
+        // possible to identify which thread is causing the problem. Calling
+        // System.exit(0) should not be necessary and is not good practice, but
+        // is a feeble attempt to force all threads to terminate.
+        System.exit(0);
     }
 
     @Override

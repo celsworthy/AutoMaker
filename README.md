@@ -39,7 +39,7 @@ You will need to have the install files of AutoMaker in place in order to run th
 ### Running from Maven
 AutoMaker needs a VM system property "libertySystems.configFile" set to the full path of the AutoMaker.configFile.xml file, which can be found in the AutoMaker repository. So in order to run the AutoMaker.jar from the command line use:
  
-	java -DlibertySystems.configFile=\AutoMaker\AutoMaker.configFile.xml -jar AutoMaker.jar
+	java -DlibertySystems.configFile=<Path to repository>\AutoMaker\AutoMaker.configFile.xml -jar AutoMaker.jar
 
 ### Running/Debugging from Netbeans
 The config file needs to be specified as a VM argument. Go to project *properties > Run* and add ```-DlibertySystems.configFile=<Path to repository>\AutoMaker\AutoMaker.configFile.xml``` to the VM arguments. You can then either run/debug the AutoMaker project.

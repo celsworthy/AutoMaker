@@ -12,6 +12,7 @@ AutoMaker depends on several other projects to run. Each can be cloned from GitH
 	git clone https://github.com/celsworthy/Licence.git
 	git clone https://github.com/celsworthy/Language.git
 	git clone https://github.com/celsworthy/RoboxBase.git
+	git clone https://github.com/celsworthy/CELTechCore.git
 	
 The projects should be built in the following order:
 
@@ -20,6 +21,7 @@ The projects should be built in the following order:
 	Licence
 	Language
 	RoboxBase
+	CELTechCore
 	AutoMaker
 
 ### Maven Build

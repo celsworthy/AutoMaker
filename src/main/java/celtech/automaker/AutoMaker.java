@@ -125,7 +125,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
         if (startupStatus == InterAppStartupStatus.STARTED_OK)
         {
             BaseConfiguration.initialise(AutoMaker.class);
-            Lookup.setupDefaultValues();
+            Lookup.setupDefaultValuesFX();
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.AUTO_UPDATE_FIRMWARE);
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.RESET_PRINTER_ID);
             

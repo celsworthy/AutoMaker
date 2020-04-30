@@ -4,7 +4,7 @@
 
     <groupId>celtech</groupId>
     <artifactId>AutoMaker</artifactId>
-    <version>4.01.01</version>
+    <version>4.01.02</version>
     <packaging>jar</packaging>
     
     <name>AutoMaker</name>

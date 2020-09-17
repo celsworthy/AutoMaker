@@ -133,7 +133,7 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             
             ApplicationUtils.outputApplicationStartupBanner(this.getClass());
 
-            commsManager = RoboxCommsManager.getInstance(BaseConfiguration.getBinariesDirectory(), false, Lookup.getUserPreferences().detectLoadedFilamentProperty(), true);
+            commsManager = RoboxCommsManager.getInstance(BaseConfiguration.getBinariesDirectory(), false, Lookup.getUserPreferences().detectLoadedFilamentProperty(), Lookup.getUserPreferences().searchForRemoteCamerasProperty());
 
             try
             {

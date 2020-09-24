@@ -3,7 +3,6 @@ package celtech.automaker;
 import celtech.configuration.ApplicationConfiguration;
 import celtech.roboxbase.ApplicationFeature;
 import celtech.roboxbase.configuration.BaseConfiguration;
-import celtech.roboxbase.licensing.LicenceManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javafx.animation.FadeTransition;
@@ -49,7 +48,12 @@ public class AutoMakerPreloader extends Preloader
         // Before splash initialise the BaseConfiguration application install directory and check the license
         // so it can get the version string. (Without this, BaseConfiguration.getApplicationVersion() returns null.)
         BaseConfiguration.getApplicationInstallDirectory(AutoMaker.class);
-        checkLicenceFile();
+        
+        // Enable all the pro version features.
+        BaseConfiguration.enableApplicationFeature(ApplicationFeature.LATEST_CURA_VERSION);
+        BaseConfiguration.enableApplicationFeature(ApplicationFeature.GCODE_VISUALISATION);
+        BaseConfiguration.enableApplicationFeature(ApplicationFeature.OFFLINE_PRINTER);
+        BaseConfiguration.enableApplicationFeature(ApplicationFeature.PRO_SPLASH_SCREEN);
         
         this.preloaderStage = stage;
         steno.debug("show splash - start");
@@ -125,9 +129,5 @@ public class AutoMakerPreloader extends Preloader
             SequentialTransition splashSequence = new SequentialTransition(pauseForABit, fadeSplash);
             splashSequence.play();
         }
-    }
-    
-    private void checkLicenceFile() {
-        LicenceManager.getInstance().validateLicence(false);
     }
 }

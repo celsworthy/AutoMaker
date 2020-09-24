@@ -11,9 +11,6 @@ import celtech.roboxbase.comms.interapp.InterAppCommsThread;
 import celtech.roboxbase.comms.interapp.InterAppRequest;
 import celtech.roboxbase.comms.interapp.InterAppStartupStatus;
 import celtech.roboxbase.configuration.BaseConfiguration;
-import celtech.roboxbase.licence.Licence;
-import celtech.roboxbase.licensing.LicenceManager;
-import celtech.roboxbase.licensing.LicensedPrinterListChangeListener;
 import celtech.roboxbase.printerControl.model.Printer;
 import celtech.roboxbase.printerControl.model.PrinterException;
 import celtech.roboxbase.utils.ApplicationUtils;
@@ -128,8 +125,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
             Lookup.setupDefaultValuesFX();
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.AUTO_UPDATE_FIRMWARE);
             BaseConfiguration.enableApplicationFeature(ApplicationFeature.RESET_PRINTER_ID);
-            
-            BaseLookup.getPrinterListChangesNotifier().addListener(new LicensedPrinterListChangeListener());
             
             ApplicationUtils.outputApplicationStartupBanner(this.getClass());
 
@@ -422,20 +417,6 @@ public class AutoMaker extends Application implements AutoUpdateCompletionListen
                 commsManager.start();
             }
 
-//            localWebInterface = new LocalWebInterface();
-//            localWebInterface.start();
-//            displayManager.loadExternalModels(startupModelsToLoad, true, false);
-
-            LicenceManager.getInstance().addLicenceChangeListener((Optional<Licence> licence) -> {
-                if (Lookup.getUserPreferences().isCustomPrinterEnabled()
-                        && !BaseConfiguration.isApplicationFeatureEnabled(ApplicationFeature.OFFLINE_PRINTER))
-                {
-                    Lookup.getUserPreferences().setCustomPrinterEnabled(false);
-                }
-            });
-
-            LicenceManager.getInstance().validateLicence(false);
-            
             // Offline printer check
             if (Lookup.getUserPreferences().isCustomPrinterEnabled())
             {
